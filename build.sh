@@ -14,10 +14,12 @@ cd "$(dirname "$0")"
 # the script ends.
 ICON_TMP=""
 STAGE_TMP=""
+WIDGET_TMP=""
 
 cleanup() {
     [[ -n "$ICON_TMP" ]] && rm -rf "$ICON_TMP"
     [[ -n "$STAGE_TMP" ]] && rm -rf "$STAGE_TMP"
+    [[ -n "$WIDGET_TMP" ]] && rm -rf "$WIDGET_TMP"
     return 0
 }
 trap cleanup EXIT
@@ -28,14 +30,17 @@ trap 'exit 1' INT TERM HUP
 
 # Flags: --dev builds the local-only "Vorssaint (Developer)" variant (its own
 # bundle id, so it coexists with the official app); --install puts it in /Applications.
+# --widgets also embeds the desktop widgets extension (see the block below).
 DEV=0
 INSTALL=0
 TEST=0
+WIDGETS=0
 TEST_ARGS=()
 for arg in "$@"; do
     case "$arg" in
         --dev)     DEV=1 ;;
         --install) INSTALL=1 ;;
+        --widgets) WIDGETS=1 ;;
         --test)    TEST=1 ;;
         --test-suite=*) TEST=1; TEST_ARGS+=("--suite=${arg#*=}") ;;
         --list-tests) TEST=1; TEST_ARGS+=(--list) ;;
@@ -71,6 +76,64 @@ developer_id_identity() {
         | grep 'Developer ID Application' \
         | head -1 \
         | sed -E 's/.*"(.*)".*/\1/' || true
+}
+
+# Desktop widgets (--widgets). A widget extension must be sandboxed and share
+# an App Group with the app, and macOS only honours that group for code signed
+# by an Apple-issued certificate whose team ID prefixes the group name. The
+# self-signed "Vorssaint Utils Signing" has no team, so --widgets signs the
+# whole bundle with a Developer ID or, failing that, an Apple Development
+# certificate (VORSSAINT_WIDGET_IDENTITY picks one explicitly). Without
+# --widgets nothing here runs and the bundle is exactly as before.
+#
+# The new signature changes the app's designated requirement: macOS asks
+# again once for the permissions already granted to this variant.
+if (( WIDGETS && ! TEST )); then
+    WIDGET_IDENTITY="${VORSSAINT_WIDGET_IDENTITY:-$(developer_id_identity)}"
+    if [[ -z "$WIDGET_IDENTITY" ]]; then
+        WIDGET_IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null \
+            | grep '"Apple Development: ' | head -1 | sed -E 's/.*"(.*)".*/\1/' || true)"
+    fi
+    if [[ -z "$WIDGET_IDENTITY" ]]; then
+        echo "✗ --widgets needs a Developer ID Application or Apple Development certificate;" >&2
+        echo "  the self-signed identity cannot carry an App Group. Without --widgets the build works as before." >&2
+        exit 1
+    fi
+    # The team ID is the certificate subject's OU. The name's parenthesised
+    # code is a per-person ID, not the team, and a group built from it is
+    # silently refused. Both LibreSSL ("/OU=X/") and OpenSSL ("OU = X,") forms.
+    WIDGET_TEAM_ID="$(security find-certificate -c "$WIDGET_IDENTITY" -p 2>/dev/null \
+        | openssl x509 -noout -subject 2>/dev/null \
+        | sed -nE 's/.*OU ?= ?([A-Z0-9]{10}).*/\1/p' | head -1)"
+    if [[ -z "$WIDGET_TEAM_ID" ]]; then
+        echo "✗ could not read the team ID (OU) of \"$WIDGET_IDENTITY\"" >&2
+        exit 1
+    fi
+    WIDGET_APP_GROUP="$WIDGET_TEAM_ID.$APP_BUNDLE_ID"
+    WIDGET_EXTENSION_ID="$APP_BUNDLE_ID.widgets"
+    WIDGET_TMP="$(mktemp -d)"
+    # The app keeps its own entitlements and gains the group.
+    cp "$ENTITLEMENTS" "$WIDGET_TMP/Vorssaint.entitlements"
+    /usr/libexec/PlistBuddy -c "Add :com.apple.security.application-groups array" \
+        -c "Add :com.apple.security.application-groups:0 string $WIDGET_APP_GROUP" \
+        "$WIDGET_TMP/Vorssaint.entitlements" >/dev/null
+    ENTITLEMENTS="$WIDGET_TMP/Vorssaint.entitlements"
+    WIDGET_ENTITLEMENTS="$WIDGET_TMP/VorssaintWidgets.entitlements"
+    /usr/libexec/PlistBuddy -c "Add :com.apple.security.app-sandbox bool true" \
+        -c "Add :com.apple.security.application-groups array" \
+        -c "Add :com.apple.security.application-groups:0 string $WIDGET_APP_GROUP" \
+        "$WIDGET_ENTITLEMENTS" >/dev/null
+    # Every signing path below takes the hardened-runtime branch it already
+    # uses for a Developer ID, now with this identity.
+    developer_id_identity() { print -r -- "$WIDGET_IDENTITY"; }
+    echo "▸ Widgets: signing with $WIDGET_IDENTITY, App Group $WIDGET_APP_GROUP"
+fi
+
+codesign_widgets_extension() {
+    local target="$1" identity="$2"
+    codesign_with_timestamp_retry --force --strip-disallowed-xattrs --options runtime --timestamp \
+        --identifier "$WIDGET_EXTENSION_ID" --entitlements "$WIDGET_ENTITLEMENTS" \
+        --sign "$identity" "$target"
 }
 
 # A find-identity listing also names certificates codesign then rejects (an
@@ -153,6 +216,7 @@ finalize_installed_bundle_after_child() {
     local bundle="$1"
     local helper="$bundle/Contents/Library/LaunchServices/$FAN_HELPER_ID"
     local adapter="$bundle/Contents/Frameworks/$NOW_PLAYING_ADAPTER"
+    local widgets="$bundle/Contents/PlugIns/VorssaintWidgets.appex"
     local devid
     devid="$(developer_id_identity)"
 
@@ -163,6 +227,7 @@ finalize_installed_bundle_after_child() {
             --options runtime --timestamp --identifier "$FAN_HELPER_ID" --sign "$devid" "$helper"
         [[ -f "$adapter" ]] && codesign_with_timestamp_retry --force --strip-disallowed-xattrs \
             --options runtime --timestamp --identifier "$NOW_PLAYING_ADAPTER_ID" --sign "$devid" "$adapter"
+        [[ -d "$widgets" ]] && (( WIDGETS )) && codesign_widgets_extension "$widgets" "$devid"
         codesign_with_timestamp_retry --force --strip-disallowed-xattrs --options runtime --timestamp \
             --entitlements "$ENTITLEMENTS" --sign "$devid" "$bundle"
     elif legacy_identity_installed; then
@@ -615,6 +680,21 @@ swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" -emit-library \
     Sources/Vorssaint/Services/Notch/NotchPlaybackCommand.swift \
     -o "build/$NOW_PLAYING_ADAPTER"
 
+if (( WIDGETS )); then
+    echo "▸ Compiling desktop widgets extension…"
+    # Only what the sandboxed extension needs: the snapshot model and its
+    # store. It never links the app's services.
+    swiftc "${APP_OPTIMIZATION_FLAGS[@]}" -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" \
+        "${BUILD_VARIANT_FLAGS[@]}" -application-extension -parse-as-library \
+        -module-name VorssaintWidgets \
+        Sources/VorssaintWidgets/*.swift \
+        Sources/Vorssaint/Services/Widgets/WidgetSnapshot.swift \
+        Sources/Vorssaint/Services/Widgets/WidgetSnapshotThrottle.swift \
+        Sources/Vorssaint/Services/Widgets/WidgetAppGroup.swift \
+        Sources/Vorssaint/Services/PrivateFileStore.swift \
+        -o build/VorssaintWidgets
+fi
+
 echo "▸ Generating app icon…"
 swift Tools/MakeIcon.swift build/AppIcon.iconset
 xattr -c -r build/AppIcon.iconset build/AppIcon.icns build/MenuBarIcon.png build/MenuBarIcon@2x.png build/BrandMark.png 2>/dev/null || true
@@ -713,6 +793,21 @@ if [[ -d Resources/Images ]]; then
     mkdir -p "$STAGE/Contents/Resources/Images"
     cp Resources/Images/* "$STAGE/Contents/Resources/Images/"
 fi
+if (( WIDGETS )); then
+    APPEX="$STAGE/Contents/PlugIns/VorssaintWidgets.appex"
+    mkdir -p "$APPEX/Contents/MacOS"
+    cp build/VorssaintWidgets "$APPEX/Contents/MacOS/VorssaintWidgets"
+    cp Resources/Widgets/Info.plist "$APPEX/Contents/Info.plist"
+    APP_SHORT_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$STAGE/Contents/Info.plist")"
+    APP_BUILD_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$STAGE/Contents/Info.plist")"
+    # An extension whose version differs from its app is flagged by macOS.
+    /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $WIDGET_EXTENSION_ID" \
+        -c "Set :CFBundleShortVersionString $APP_SHORT_VERSION" \
+        -c "Set :CFBundleVersion $APP_BUILD_VERSION" \
+        -c "Add :VorssaintAppGroup string $WIDGET_APP_GROUP" \
+        "$APPEX/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Add :VorssaintAppGroup string $WIDGET_APP_GROUP" "$STAGE/Contents/Info.plist"
+fi
 xattr -c -r "$STAGE" 2>/dev/null || true
 
 # Signing, in order of preference:
@@ -769,6 +864,7 @@ sign_bundle() {
     local executable="$bundle/Contents/MacOS/$EXECUTABLE"
     local helper="$bundle/Contents/Library/LaunchServices/$FAN_HELPER_ID"
     local adapter="$bundle/Contents/Frameworks/$NOW_PLAYING_ADAPTER"
+    local widgets="$bundle/Contents/PlugIns/VorssaintWidgets.appex"
 
     if [[ -n "$DEVID" ]]; then
         echo "  signing with Developer ID (hardened runtime): $DEVID"
@@ -779,6 +875,7 @@ sign_bundle() {
     fi
     [[ -f "$helper" ]] && codesign_fan_helper "$helper"
     [[ -f "$adapter" ]] && codesign_now_playing_adapter "$adapter"
+    [[ -d "$widgets" ]] && (( WIDGETS )) && codesign_widgets_extension "$widgets" "$DEVID"
     codesign_app "$bundle"
 
     # If local filesystem metadata invalidates the first signature, sign once
@@ -788,11 +885,13 @@ sign_bundle() {
         xattr -c -r "$bundle" 2>/dev/null || true
         [[ -f "$helper" ]] && codesign_fan_helper "$helper"
         [[ -f "$adapter" ]] && codesign_now_playing_adapter "$adapter"
+        [[ -d "$widgets" ]] && (( WIDGETS )) && codesign_widgets_extension "$widgets" "$DEVID"
         codesign_app "$bundle"
     fi
     [[ -f "$executable" ]] && codesign --verify --strict "$executable"
     [[ -f "$helper" ]] && codesign --verify --strict "$helper"
     [[ -f "$adapter" ]] && codesign --verify --strict "$adapter"
+    [[ -d "$widgets" ]] && codesign --verify --strict "$widgets"
     codesign --verify --deep --strict "$bundle"
 }
 
