@@ -1,0 +1,219 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Vorssaint
+
+import Foundation
+
+/// Raw readings the app already holds, copied out of `SystemSnapshot`,
+/// `PowerReading`, `KeepAwakeManager`, `AgentUsageSnapshot`, `NotchPlayback`
+/// and the clipboard history. Plain values so the builder stays testable
+/// without the services that produce them.
+struct WidgetSnapshotInputs {
+    struct LimitWindow {
+        var label: String
+        var usedPercent: Double
+        var resetsAt: Date?
+    }
+
+    struct Playback {
+        var title: String
+        var artist: String
+        var isPlaying: Bool
+        var elapsed: TimeInterval
+        var duration: TimeInterval
+        var sampledAt: Date
+    }
+
+    /// The fields of `PowerReading` a widget shows.
+    struct Power {
+        var hasBattery = false
+        var chargePercent: Int?
+        var isCharging = false
+        var externalConnected = false
+        var timeRemainingSeconds: TimeInterval?
+    }
+
+    struct ClipboardEntry {
+        var kind: WidgetSnapshot.ClipboardItem.Kind
+        var text: String
+        var filePaths: [String] = []
+        var copiedAt: Date
+    }
+
+    // System, fractions 0...1 as `SystemSnapshot` keeps them
+    var cpuUsage: Double?
+    var cpuHistory: [Double] = []
+    var gpuUsage: Double?
+    var memoryUsed: UInt64?
+    var memoryTotal: UInt64?
+    var memoryPressure: String?
+    var cpuTemperature: Double?
+    var netDownBytesPerSec: Double?
+    var netUpBytesPerSec: Double?
+    var diskFreeBytes: UInt64?
+
+    // Power; nil when the Mac reported nothing (a desktop with no SMC power keys)
+    var power: Power?
+    var peripherals: [(name: String, percent: Int)] = []
+
+    var keepAwakeActive = false
+    var keepAwakeEnd: Date?
+
+    var agentWindows: [LimitWindow] = []
+    var agentTodayTokens: Int?
+    var agentLiveSessions = 0
+    var agentsLoaded = false
+
+    var playback: Playback?
+
+    var clipboard: [ClipboardEntry] = []
+    /// The person's choice; off by default because history can hold private text.
+    var showsClipboard = false
+}
+
+enum WidgetSnapshotBuilder {
+    /// One point per 15 minutes over six hours is what the medium widget draws.
+    static let historyPoints = 24
+    static let maxPeripherals = 3
+    static let maxAgentWindows = 3
+    static let maxClipboardItems = 3
+    static let maxPreviewCharacters = 60
+    static let maxTrackCharacters = 80
+
+    static func build(_ inputs: WidgetSnapshotInputs, now: Date) -> WidgetSnapshot {
+        WidgetSnapshot(
+            generatedAt: now,
+            system: system(inputs),
+            power: power(inputs),
+            keepAwake: WidgetSnapshot.KeepAwake(
+                isActive: inputs.keepAwakeActive,
+                endsAt: inputs.keepAwakeActive ? inputs.keepAwakeEnd : nil),
+            agents: agents(inputs),
+            nowPlaying: nowPlaying(inputs.playback),
+            clipboard: inputs.showsClipboard ? clipboard(inputs.clipboard) : [])
+    }
+
+    // MARK: - Sections
+
+    private static func system(_ inputs: WidgetSnapshotInputs) -> WidgetSnapshot.System? {
+        var memory: Int?
+        if let used = inputs.memoryUsed, let total = inputs.memoryTotal, total > 0 {
+            memory = percent(Double(used) / Double(total))
+        }
+        let section = WidgetSnapshot.System(
+            cpuPercent: inputs.cpuUsage.flatMap(percent),
+            cpuHistory: downsample(inputs.cpuHistory, to: historyPoints).compactMap(percent),
+            gpuPercent: inputs.gpuUsage.flatMap(percent),
+            memoryPercent: memory,
+            memoryPressure: inputs.memoryPressure,
+            cpuTemperatureCelsius: inputs.cpuTemperature.flatMap(rounded),
+            netDownBytesPerSec: inputs.netDownBytesPerSec.flatMap(nonNegative),
+            netUpBytesPerSec: inputs.netUpBytesPerSec.flatMap(nonNegative),
+            diskFreeBytes: inputs.diskFreeBytes)
+        return section == WidgetSnapshot.System() ? nil : section
+    }
+
+    private static func power(_ inputs: WidgetSnapshotInputs) -> WidgetSnapshot.Power? {
+        let peripherals = Array(inputs.peripherals.compactMap { device -> WidgetSnapshot.Peripheral? in
+            let name = device.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return nil }
+            return WidgetSnapshot.Peripheral(name: name, percent: min(100, max(0, device.percent)))
+        }.prefix(maxPeripherals))
+        let reading = inputs.power
+        guard reading != nil || !peripherals.isEmpty else { return nil }
+        return WidgetSnapshot.Power(
+            hasBattery: reading?.hasBattery ?? false,
+            chargePercent: reading?.chargePercent.map { min(100, max(0, $0)) },
+            isCharging: reading?.isCharging ?? false,
+            externalConnected: reading?.externalConnected ?? false,
+            timeRemainingSeconds: reading?.timeRemainingSeconds.flatMap(rounded).flatMap { $0 > 0 ? $0 : nil },
+            peripherals: peripherals)
+    }
+
+    private static func agents(_ inputs: WidgetSnapshotInputs) -> WidgetSnapshot.Agents? {
+        guard inputs.agentsLoaded else { return nil }
+        let windows = inputs.agentWindows.prefix(maxAgentWindows).compactMap { window -> WidgetSnapshot.LimitWindow? in
+            guard let used = rounded(window.usedPercent) else { return nil }
+            return WidgetSnapshot.LimitWindow(label: window.label, usedPercent: min(100, max(0, used)),
+                                              resetsAt: window.resetsAt)
+        }
+        return WidgetSnapshot.Agents(windows: windows,
+                                     todayTokens: inputs.agentTodayTokens.map { max(0, $0) },
+                                     liveSessions: max(0, inputs.agentLiveSessions))
+    }
+
+    private static func nowPlaying(_ playback: WidgetSnapshotInputs.Playback?) -> WidgetSnapshot.NowPlaying? {
+        guard let playback else { return nil }
+        let title = truncated(collapsed(playback.title), to: maxTrackCharacters)
+        guard !title.isEmpty else { return nil }
+        let duration = playback.duration.isFinite ? max(0, playback.duration) : 0
+        let elapsed = playback.elapsed.isFinite ? min(max(0, playback.elapsed), duration > 0 ? duration : .greatestFiniteMagnitude) : 0
+        return WidgetSnapshot.NowPlaying(
+            title: title,
+            artist: truncated(collapsed(playback.artist), to: maxTrackCharacters),
+            isPlaying: playback.isPlaying,
+            elapsed: elapsed,
+            duration: duration,
+            sampledAt: playback.sampledAt)
+    }
+
+    private static func clipboard(_ entries: [WidgetSnapshotInputs.ClipboardEntry]) -> [WidgetSnapshot.ClipboardItem] {
+        let items = entries.compactMap { entry -> WidgetSnapshot.ClipboardItem? in
+            switch entry.kind {
+            case .text:
+                let preview = truncated(collapsed(entry.text), to: maxPreviewCharacters)
+                guard !preview.isEmpty else { return nil }
+                return .init(kind: .text, preview: preview, copiedAt: entry.copiedAt)
+            case .image:
+                return .init(kind: .image, preview: "", copiedAt: entry.copiedAt)
+            case .files:
+                guard let first = entry.filePaths.first else { return nil }
+                let name = truncated((first as NSString).lastPathComponent, to: maxPreviewCharacters)
+                return .init(kind: .files, preview: name, copiedAt: entry.copiedAt)
+            }
+        }
+        return Array(items.sorted { $0.copiedAt > $1.copiedAt }.prefix(maxClipboardItems))
+    }
+
+    // MARK: - Values
+
+    /// 0...1 fraction to a whole percent; nil for readings that are not numbers.
+    static func percent(_ fraction: Double) -> Int? {
+        guard fraction.isFinite else { return nil }
+        return Int((min(1, max(0, fraction)) * 100).rounded())
+    }
+
+    private static func rounded(_ value: Double) -> Int? {
+        guard value.isFinite, abs(value) < Double(Int.max) else { return nil }
+        return Int(value.rounded())
+    }
+
+    private static func nonNegative(_ value: Double) -> Double? {
+        value.isFinite ? max(0, value) : nil
+    }
+
+    /// Averages consecutive buckets so the newest reading stays the last point.
+    static func downsample(_ values: [Double], to count: Int) -> [Double] {
+        let finite = values.filter(\.isFinite)
+        guard count > 0, finite.count > count else { return finite }
+        var result: [Double] = []
+        result.reserveCapacity(count)
+        for bucket in 0..<count {
+            let lower = bucket * finite.count / count
+            let upper = (bucket + 1) * finite.count / count
+            let slice = finite[lower..<upper]
+            result.append(slice.reduce(0, +) / Double(slice.count))
+        }
+        return result
+    }
+
+    /// Line breaks and runs of spaces become one space, so a copied paragraph
+    /// reads as a single line in a widget row.
+    static func collapsed(_ text: String) -> String {
+        text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).joined(separator: " ")
+    }
+
+    static func truncated(_ text: String, to limit: Int) -> String {
+        guard text.count > limit, limit > 1 else { return text }
+        return String(text.prefix(limit - 1)).trimmingCharacters(in: .whitespaces) + "…"
+    }
+}
