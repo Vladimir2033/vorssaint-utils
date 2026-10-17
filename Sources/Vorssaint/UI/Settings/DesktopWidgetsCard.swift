@@ -17,6 +17,11 @@ struct DesktopWidgetsCard: View {
     @AppStorage(DefaultsKey.desktopWidgetCalendarMonth) private var calendarMonth = false
     @AppStorage(DefaultsKey.desktopWidgetWorldClock) private var worldClock = false
     @AppStorage(DefaultsKey.desktopWidgetAccessories) private var accessories = false
+    @AppStorage(DefaultsKey.desktopWidgetWeather) private var weather = false
+    @State private var weatherCities: [WeatherCity] = DesktopWeatherService.shared.cities
+    @State private var weatherSearch = ""
+    @State private var weatherResults: [WeatherCity] = []
+    @State private var searchTask: Task<Void, Never>?
     @AppStorage(DefaultsKey.widgetCalendarShowsTitles) private var showsTitles = true
     @State private var clocks: [String] = UserDefaults.standard.stringArray(forKey: DefaultsKey.desktopWidgetClocks) ?? []
     @State private var citySearch = ""
@@ -25,6 +30,7 @@ struct DesktopWidgetsCard: View {
     private var usesCalendar: Bool { agenda || nextEvent || calendarMonth }
     private var anyOn: Bool {
         system || systemCompact || systemDetailed || agenda || nextEvent || calendarMonth || worldClock || accessories
+            || weather
     }
 
     var body: some View {
@@ -41,6 +47,8 @@ struct DesktopWidgetsCard: View {
             switchRow("calendar.circle", strings.monthCalendar, $calendarMonth)
             switchRow("globe", strings.worldClock, $worldClock)
             if worldClock { clockEditor }
+            switchRow("cloud.sun", strings.weather, $weather)
+            if weather { weatherEditor }
             switchRow("keyboard", strings.accessories, $accessories)
             if accessories {
                 Text(strings.accessoriesCaption)
@@ -110,6 +118,71 @@ struct DesktopWidgetsCard: View {
             }
         }
         .padding(.leading, settingsRowTextInset)
+    }
+
+    /// The weather card's cities: remove one, or search Open-Meteo to add up
+    /// to four. The search runs only after a pause in typing.
+    private var weatherEditor: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(strings.weatherCaption)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(strings.cities).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            ForEach(weatherCities) { city in
+                HStack {
+                    Text(cityLabel(city))
+                    Spacer()
+                    Button {
+                        weatherCities.removeAll { $0.id == city.id }
+                        DesktopWeatherService.shared.setCities(weatherCities)
+                    } label: {
+                        Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .font(.callout)
+            }
+            if weatherCities.count < DesktopWeather.maxCities {
+                Text(strings.addCity).font(.caption).foregroundStyle(.secondary)
+                TextField(strings.searchCity, text: $weatherSearch)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 260)
+                    .onChange(of: weatherSearch) { _, query in scheduleWeatherSearch(query) }
+                ForEach(weatherResults.filter { result in !weatherCities.contains { $0.id == result.id } }) { city in
+                    Button {
+                        weatherCities.append(city)
+                        weatherSearch = ""
+                        weatherResults = []
+                        DesktopWeatherService.shared.setCities(weatherCities)
+                    } label: {
+                        Label(cityLabel(city), systemImage: "plus.circle")
+                    }
+                    .buttonStyle(.plain)
+                    .font(.callout)
+                }
+            }
+        }
+        .padding(.leading, settingsRowTextInset)
+    }
+
+    private func cityLabel(_ city: WeatherCity) -> String {
+        [city.name, city.region, city.country].filter { !$0.isEmpty }.reduce(into: [String]()) { list, part in
+            if !list.contains(part) { list.append(part) }
+        }
+        .joined(separator: ", ")
+    }
+
+    private func scheduleWeatherSearch(_ query: String) {
+        searchTask?.cancel()
+        let language = String(l10n.language.rawValue.prefix(2))
+        searchTask = Task {
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            guard !Task.isCancelled else { return }
+            let found = await DesktopWeatherService.shared.search(query, language: language)
+            guard !Task.isCancelled else { return }
+            weatherResults = found
+        }
     }
 
     private func saveClocks() {

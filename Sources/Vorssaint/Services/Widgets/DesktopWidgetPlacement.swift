@@ -7,7 +7,7 @@ import Foundation
 /// The cards Vorssaint can draw on the desktop. The raw value keys the saved
 /// position, so a case is never renamed.
 enum DesktopWidgetKind: String, CaseIterable {
-    case system, systemCompact, systemDetailed, agenda, nextEvent, calendarMonth, worldClock, accessories
+    case system, systemCompact, systemDetailed, agenda, nextEvent, calendarMonth, worldClock, accessories, weather
 
     /// The switch that turns the card on.
     var defaultsKey: String {
@@ -20,6 +20,7 @@ enum DesktopWidgetKind: String, CaseIterable {
         case .calendarMonth: return DefaultsKey.desktopWidgetCalendarMonth
         case .worldClock: return DefaultsKey.desktopWidgetWorldClock
         case .accessories: return DefaultsKey.desktopWidgetAccessories
+        case .weather: return DefaultsKey.desktopWidgetWeather
         }
     }
 
@@ -34,7 +35,7 @@ enum DesktopWidgetKind: String, CaseIterable {
         switch self {
         case .system, .worldClock: return CGSize(width: 364, height: 170)
         case .systemCompact, .nextEvent, .accessories: return CGSize(width: 170, height: 170)
-        case .systemDetailed, .agenda: return CGSize(width: 364, height: 382)
+        case .systemDetailed, .agenda, .weather: return CGSize(width: 364, height: 382)
         case .calendarMonth: return CGSize(width: 364, height: 470)
         }
     }

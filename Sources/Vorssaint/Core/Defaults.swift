@@ -861,6 +861,9 @@ enum DefaultsKey {
     static let desktopWidgetCalendarMonth = "desktopWidgetCalendarMonth"
     static let desktopWidgetWorldClock = "desktopWidgetWorldClock"
     static let desktopWidgetAccessories = "desktopWidgetAccessories"
+    static let desktopWidgetWeather = "desktopWidgetWeather"
+    /// [JSON WeatherCity] the weather card follows, in order.
+    static let desktopWidgetWeatherCities = "desktopWidgetWeatherCities"
     /// [TimeZone.identifier] the world clock shows, in order.
     static let desktopWidgetClocks = "desktopWidgetClocks"
     /// [DesktopWidgetKind.rawValue: "x,y"], where each card was left. Screen
@@ -1459,6 +1462,8 @@ enum Defaults {
         DefaultsKey.desktopWidgetWorldClock: false,
         DefaultsKey.desktopWidgetAccessories: false,
         DefaultsKey.desktopWidgetClocks: ["America/New_York", "Europe/London", "Asia/Tokyo"],
+        DefaultsKey.desktopWidgetWeather: false,
+        DefaultsKey.desktopWidgetWeatherCities: [String](),
         DefaultsKey.notchAgentsEnabled: false,
         DefaultsKey.notchAgentsClaude: true,
         DefaultsKey.notchAgentsCodex: true,

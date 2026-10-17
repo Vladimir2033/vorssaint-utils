@@ -77,6 +77,8 @@ final class DesktopWidgetsService {
         monitor.setWidgetsMonitoring(enabled.contains { $0.readsSystem }, consumer: "desktop")
         monitor.setWidgetsMonitoring(enabled.contains(.accessories), consumer: "accessories")
         if enabled.contains(.calendarMonth) { loadMonth() }
+        // The one card that goes online, and only while it is on the desk.
+        if enabled.contains(.weather) { DesktopWeatherService.shared.start() } else { DesktopWeatherService.shared.stop() }
     }
 
     func stop() {
@@ -88,6 +90,7 @@ final class DesktopWidgetsService {
         for kind in Array(panels.keys) { close(kind) }
         SystemMonitor.shared.setWidgetsMonitoring(false, consumer: "desktop")
         SystemMonitor.shared.setWidgetsMonitoring(false, consumer: "accessories")
+        DesktopWeatherService.shared.stop()
         monthTask?.cancel()
         monthTask = nil
         calendarDirty = true

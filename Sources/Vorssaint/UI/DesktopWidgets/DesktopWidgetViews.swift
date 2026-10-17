@@ -91,6 +91,8 @@ struct DesktopWidgetRoot: View {
                 DesktopWorldClockCard(now: model.now, strings: strings)
             case .accessories:
                 DesktopAccessoriesCard(power: model.snapshot?.power, strings: strings)
+            case .weather:
+                DesktopWeatherCard(strings: strings)
             }
         }
         .padding(14)
@@ -977,6 +979,131 @@ struct DesktopAccessoriesCard: View {
         case "trackpad": return "rectangle.and.hand.point.up.left"
         case "audio": return "headphones"
         default: return "battery.75percent"
+        }
+    }
+}
+
+// MARK: - Weather
+
+private func conditionName(_ condition: WeatherCondition, strings: DesktopWidgetsFeatureStrings) -> String {
+    switch condition {
+    case .clear: return strings.condClear
+    case .partlyCloudy: return strings.condPartlyCloudy
+    case .cloudy: return strings.condCloudy
+    case .fog: return strings.condFog
+    case .drizzle: return strings.condDrizzle
+    case .rain: return strings.condRain
+    case .snow: return strings.condSnow
+    case .showers: return strings.condShowers
+    case .thunderstorm: return strings.condThunderstorm
+    }
+}
+
+/// The first city large, with its next hours, like the system's Weather
+/// widget; the others below it, one row each.
+struct DesktopWeatherCard: View {
+    let strings: DesktopWidgetsFeatureStrings
+    @ObservedObject private var weather = DesktopWeatherService.shared
+
+    var body: some View {
+        let cities = weather.cities
+        VStack(alignment: .leading, spacing: 10) {
+            DesktopWidgetHeader(title: strings.weather, symbol: "cloud.sun")
+            if let first = cities.first, let report = weather.reports[first.id] {
+                lead(first, report)
+                if cities.count > 1 {
+                    Divider().opacity(0.5)
+                    VStack(spacing: 8) {
+                        ForEach(cities.dropFirst()) { city in
+                            row(city, weather.reports[city.id])
+                        }
+                    }
+                }
+                Spacer(minLength: 0)
+                Text(report.fetchedAt, style: .time)
+                    .font(.system(size: 9))
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            } else {
+                Spacer(minLength: 0)
+                Text(cities.isEmpty ? strings.addCity : strings.noForecast)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private func lead(_ city: WeatherCity, _ report: WeatherReport) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(city.name)
+                        .font(.system(size: 15, weight: .semibold))
+                        .lineLimit(1)
+                    Text(DesktopWeather.degrees(report.temperature))
+                        .font(.system(size: 46, weight: .light, design: .rounded))
+                        .monospacedDigit()
+                }
+                Spacer(minLength: 4)
+                VStack(alignment: .trailing, spacing: 4) {
+                    Image(systemName: report.condition.symbol(isDay: report.isDay))
+                        .symbolRenderingMode(.multicolor)
+                        .font(.system(size: 26))
+                    Text(conditionName(report.condition, strings: strings))
+                        .font(.system(size: 12, weight: .semibold))
+                    if let high = report.high, let low = report.low {
+                        Text("↑\(DesktopWeather.degrees(high))  ↓\(DesktopWeather.degrees(low))")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            HStack(spacing: 0) {
+                ForEach(Array(report.hours.enumerated()), id: \.offset) { _, hour in
+                    VStack(spacing: 5) {
+                        Text(String(format: "%02d", hour.hour))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        Image(systemName: hour.condition.symbol(isDay: hour.isDay))
+                            .symbolRenderingMode(.multicolor)
+                            .font(.system(size: 16))
+                            .frame(height: 20)
+                        Text(DesktopWeather.degrees(hour.temperature))
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .padding(.vertical, 6)
+            .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+    }
+
+    private func row(_ city: WeatherCity, _ report: WeatherReport?) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(city.name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                Text(report.map { conditionName($0.condition, strings: strings) } ?? strings.noForecast)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            if let report {
+                Image(systemName: report.condition.symbol(isDay: report.isDay))
+                    .symbolRenderingMode(.multicolor)
+                    .font(.system(size: 18))
+                if let high = report.high, let low = report.low {
+                    Text("↑\(DesktopWeather.degrees(high)) ↓\(DesktopWeather.degrees(low))")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+                Text(DesktopWeather.degrees(report.temperature))
+                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+                    .frame(width: 46, alignment: .trailing)
+            }
         }
     }
 }

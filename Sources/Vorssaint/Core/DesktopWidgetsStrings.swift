@@ -50,6 +50,18 @@ struct DesktopWidgetsFeatureStrings {
     let accessories: String
     let noAccessories: String
     let accessoriesCaption: String
+    let weather: String
+    let weatherCaption: String
+    let noForecast: String
+    let condClear: String
+    let condPartlyCloudy: String
+    let condCloudy: String
+    let condFog: String
+    let condDrizzle: String
+    let condRain: String
+    let condSnow: String
+    let condShowers: String
+    let condThunderstorm: String
 }
 
 extension FeatureStrings {
@@ -120,7 +132,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Yesterday",
         accessories: "Accessories",
         noAccessories: "No accessories found",
-        accessoriesCaption: "Apple keyboards, trackpads and mice are read directly. Other accessories use Bluetooth, and macOS may ask once."
+        accessoriesCaption: "Apple keyboards, trackpads and mice are read directly. Other accessories use Bluetooth, and macOS may ask once.",
+        weather: "Weather",
+        weatherCaption: "Forecast from Open-Meteo, every 30 minutes. Only the coordinates of the cities you add are sent; no account, nothing about you.",
+        noForecast: "No forecast yet",
+        condClear: "Clear",
+        condPartlyCloudy: "Partly cloudy",
+        condCloudy: "Cloudy",
+        condFog: "Fog",
+        condDrizzle: "Drizzle",
+        condRain: "Rain",
+        condSnow: "Snow",
+        condShowers: "Showers",
+        condThunderstorm: "Thunderstorm"
     )
 
     static let ptBR = DesktopWidgetsFeatureStrings(
@@ -168,7 +192,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Ontem",
         accessories: "Acessórios",
         noAccessories: "Nenhum acessório encontrado",
-        accessoriesCaption: "Teclados, trackpads e mouses da Apple são lidos direto. Outros acessórios usam Bluetooth, e o macOS pode pedir permissão uma vez."
+        accessoriesCaption: "Teclados, trackpads e mouses da Apple são lidos direto. Outros acessórios usam Bluetooth, e o macOS pode pedir permissão uma vez.",
+        weather: "Tempo",
+        weatherCaption: "Previsão do Open-Meteo, a cada 30 minutos. Só as coordenadas das cidades que você adicionar são enviadas; sem conta, nada sobre você.",
+        noForecast: "Sem previsão ainda",
+        condClear: "Céu limpo",
+        condPartlyCloudy: "Parcialmente nublado",
+        condCloudy: "Nublado",
+        condFog: "Neblina",
+        condDrizzle: "Garoa",
+        condRain: "Chuva",
+        condSnow: "Neve",
+        condShowers: "Pancadas de chuva",
+        condThunderstorm: "Tempestade"
     )
 
     static let tr = DesktopWidgetsFeatureStrings(
@@ -216,7 +252,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Dün",
         accessories: "Aksesuarlar",
         noAccessories: "Aksesuar bulunamadı",
-        accessoriesCaption: "Apple klavye, izleme dörtgeni ve fareleri doğrudan okunur. Diğer aksesuarlar Bluetooth kullanır ve macOS bir kez izin isteyebilir."
+        accessoriesCaption: "Apple klavye, izleme dörtgeni ve fareleri doğrudan okunur. Diğer aksesuarlar Bluetooth kullanır ve macOS bir kez izin isteyebilir.",
+        weather: "Hava durumu",
+        weatherCaption: "Tahmin Open-Meteo’dan, 30 dakikada bir. Yalnızca eklediğiniz şehirlerin koordinatları gönderilir; hesap yok, sizinle ilgili hiçbir şey yok.",
+        noForecast: "Henüz tahmin yok",
+        condClear: "Açık",
+        condPartlyCloudy: "Parçalı bulutlu",
+        condCloudy: "Bulutlu",
+        condFog: "Sis",
+        condDrizzle: "Çisenti",
+        condRain: "Yağmur",
+        condSnow: "Kar",
+        condShowers: "Sağanak",
+        condThunderstorm: "Gök gürültülü fırtına"
     )
 
     static let ru = DesktopWidgetsFeatureStrings(
@@ -264,7 +312,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Вчера",
         accessories: "Аксессуары",
         noAccessories: "Аксессуары не найдены",
-        accessoriesCaption: "Клавиатуры, трекпады и мыши Apple читаются напрямую. Другие аксессуары используют Bluetooth, и macOS может один раз запросить разрешение."
+        accessoriesCaption: "Клавиатуры, трекпады и мыши Apple читаются напрямую. Другие аксессуары используют Bluetooth, и macOS может один раз запросить разрешение.",
+        weather: "Погода",
+        weatherCaption: "Прогноз Open-Meteo раз в 30 минут. Отправляются только координаты добавленных городов; без аккаунта и без данных о вас.",
+        noForecast: "Прогноза пока нет",
+        condClear: "Ясно",
+        condPartlyCloudy: "Переменная облачность",
+        condCloudy: "Облачно",
+        condFog: "Туман",
+        condDrizzle: "Морось",
+        condRain: "Дождь",
+        condSnow: "Снег",
+        condShowers: "Ливни",
+        condThunderstorm: "Гроза"
     )
 
     static let es = DesktopWidgetsFeatureStrings(
@@ -312,7 +372,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Ayer",
         accessories: "Accesorios",
         noAccessories: "No se encontraron accesorios",
-        accessoriesCaption: "Los teclados, trackpads y ratones de Apple se leen directamente. Otros accesorios usan Bluetooth y macOS puede pedir permiso una vez."
+        accessoriesCaption: "Los teclados, trackpads y ratones de Apple se leen directamente. Otros accesorios usan Bluetooth y macOS puede pedir permiso una vez.",
+        weather: "Tiempo",
+        weatherCaption: "Pronóstico de Open-Meteo, cada 30 minutos. Solo se envían las coordenadas de las ciudades que añadas; sin cuenta, nada sobre ti.",
+        noForecast: "Aún no hay pronóstico",
+        condClear: "Despejado",
+        condPartlyCloudy: "Parcialmente nublado",
+        condCloudy: "Nublado",
+        condFog: "Niebla",
+        condDrizzle: "Llovizna",
+        condRain: "Lluvia",
+        condSnow: "Nieve",
+        condShowers: "Chubascos",
+        condThunderstorm: "Tormenta"
     )
 
     static let sk = DesktopWidgetsFeatureStrings(
@@ -360,7 +432,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Včera",
         accessories: "Príslušenstvo",
         noAccessories: "Nenašlo sa žiadne príslušenstvo",
-        accessoriesCaption: "Klávesnice, trackpady a myši Apple sa čítajú priamo. Iné príslušenstvo používa Bluetooth a macOS môže raz požiadať o povolenie."
+        accessoriesCaption: "Klávesnice, trackpady a myši Apple sa čítajú priamo. Iné príslušenstvo používa Bluetooth a macOS môže raz požiadať o povolenie.",
+        weather: "Počasie",
+        weatherCaption: "Predpoveď z Open-Meteo každých 30 minút. Odosielajú sa len súradnice miest, ktoré pridáte; bez účtu, nič o vás.",
+        noForecast: "Zatiaľ bez predpovede",
+        condClear: "Jasno",
+        condPartlyCloudy: "Polojasno",
+        condCloudy: "Zamračené",
+        condFog: "Hmla",
+        condDrizzle: "Mrholenie",
+        condRain: "Dážď",
+        condSnow: "Sneh",
+        condShowers: "Prehánky",
+        condThunderstorm: "Búrka"
     )
 
     static let de = DesktopWidgetsFeatureStrings(
@@ -408,7 +492,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Gestern",
         accessories: "Zubehör",
         noAccessories: "Kein Zubehör gefunden",
-        accessoriesCaption: "Tastaturen, Trackpads und Mäuse von Apple werden direkt gelesen. Anderes Zubehör nutzt Bluetooth, und macOS fragt eventuell einmal nach."
+        accessoriesCaption: "Tastaturen, Trackpads und Mäuse von Apple werden direkt gelesen. Anderes Zubehör nutzt Bluetooth, und macOS fragt eventuell einmal nach.",
+        weather: "Wetter",
+        weatherCaption: "Vorhersage von Open-Meteo, alle 30 Minuten. Gesendet werden nur die Koordinaten der Städte, die Sie hinzufügen; kein Konto, nichts über Sie.",
+        noForecast: "Noch keine Vorhersage",
+        condClear: "Klar",
+        condPartlyCloudy: "Teilweise bewölkt",
+        condCloudy: "Bewölkt",
+        condFog: "Nebel",
+        condDrizzle: "Nieselregen",
+        condRain: "Regen",
+        condSnow: "Schnee",
+        condShowers: "Schauer",
+        condThunderstorm: "Gewitter"
     )
 
     static let fr = DesktopWidgetsFeatureStrings(
@@ -456,7 +552,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Hier",
         accessories: "Accessoires",
         noAccessories: "Aucun accessoire trouvé",
-        accessoriesCaption: "Les claviers, trackpads et souris Apple sont lus directement. Les autres accessoires utilisent le Bluetooth, et macOS peut demander une autorisation une fois."
+        accessoriesCaption: "Les claviers, trackpads et souris Apple sont lus directement. Les autres accessoires utilisent le Bluetooth, et macOS peut demander une autorisation une fois.",
+        weather: "Météo",
+        weatherCaption: "Prévisions d’Open-Meteo, toutes les 30 minutes. Seules les coordonnées des villes que vous ajoutez sont envoyées. Aucun compte, rien sur vous.",
+        noForecast: "Pas encore de prévisions",
+        condClear: "Dégagé",
+        condPartlyCloudy: "Partiellement nuageux",
+        condCloudy: "Nuageux",
+        condFog: "Brouillard",
+        condDrizzle: "Bruine",
+        condRain: "Pluie",
+        condSnow: "Neige",
+        condShowers: "Averses",
+        condThunderstorm: "Orage"
     )
 
     static let it = DesktopWidgetsFeatureStrings(
@@ -504,7 +612,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Ieri",
         accessories: "Accessori",
         noAccessories: "Nessun accessorio trovato",
-        accessoriesCaption: "Tastiere, trackpad e mouse Apple vengono letti direttamente. Gli altri accessori usano il Bluetooth e macOS potrebbe chiedere il permesso una volta."
+        accessoriesCaption: "Tastiere, trackpad e mouse Apple vengono letti direttamente. Gli altri accessori usano il Bluetooth e macOS potrebbe chiedere il permesso una volta.",
+        weather: "Meteo",
+        weatherCaption: "Previsioni da Open-Meteo, ogni 30 minuti. Vengono inviate solo le coordinate delle città che aggiungi; nessun account, niente su di te.",
+        noForecast: "Nessuna previsione ancora",
+        condClear: "Sereno",
+        condPartlyCloudy: "Parzialmente nuvoloso",
+        condCloudy: "Nuvoloso",
+        condFog: "Nebbia",
+        condDrizzle: "Pioviggine",
+        condRain: "Pioggia",
+        condSnow: "Neve",
+        condShowers: "Rovesci",
+        condThunderstorm: "Temporale"
     )
 
     static let ja = DesktopWidgetsFeatureStrings(
@@ -552,7 +672,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "昨日",
         accessories: "アクセサリ",
         noAccessories: "アクセサリが見つかりません",
-        accessoriesCaption: "Apple のキーボード、トラックパッド、マウスは直接読み取ります。その他のアクセサリは Bluetooth を使うため、macOS が一度だけ許可を求めることがあります。"
+        accessoriesCaption: "Apple のキーボード、トラックパッド、マウスは直接読み取ります。その他のアクセサリは Bluetooth を使うため、macOS が一度だけ許可を求めることがあります。",
+        weather: "天気",
+        weatherCaption: "Open-Meteo の予報を 30 分ごとに取得します。送信するのは追加した都市の座標だけで、アカウントもあなたの情報も不要です。",
+        noForecast: "まだ予報がありません",
+        condClear: "晴れ",
+        condPartlyCloudy: "晴れ時々曇り",
+        condCloudy: "曇り",
+        condFog: "霧",
+        condDrizzle: "霧雨",
+        condRain: "雨",
+        condSnow: "雪",
+        condShowers: "にわか雨",
+        condThunderstorm: "雷雨"
     )
 
     static let ko = DesktopWidgetsFeatureStrings(
@@ -600,7 +732,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "어제",
         accessories: "액세서리",
         noAccessories: "액세서리를 찾을 수 없음",
-        accessoriesCaption: "Apple 키보드, 트랙패드, 마우스는 직접 읽습니다. 다른 액세서리는 Bluetooth를 사용하며 macOS가 한 번 권한을 요청할 수 있습니다."
+        accessoriesCaption: "Apple 키보드, 트랙패드, 마우스는 직접 읽습니다. 다른 액세서리는 Bluetooth를 사용하며 macOS가 한 번 권한을 요청할 수 있습니다.",
+        weather: "날씨",
+        weatherCaption: "Open-Meteo 예보를 30분마다 가져옵니다. 추가한 도시의 좌표만 전송되며 계정이나 개인 정보는 필요 없습니다.",
+        noForecast: "아직 예보 없음",
+        condClear: "맑음",
+        condPartlyCloudy: "구름 조금",
+        condCloudy: "흐림",
+        condFog: "안개",
+        condDrizzle: "이슬비",
+        condRain: "비",
+        condSnow: "눈",
+        condShowers: "소나기",
+        condThunderstorm: "뇌우"
     )
 
     static let zhHans = DesktopWidgetsFeatureStrings(
@@ -648,7 +792,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "昨天",
         accessories: "配件",
         noAccessories: "未找到配件",
-        accessoriesCaption: "Apple 键盘、触控板和鼠标直接读取。其他配件使用蓝牙，macOS 可能会请求一次权限。"
+        accessoriesCaption: "Apple 键盘、触控板和鼠标直接读取。其他配件使用蓝牙，macOS 可能会请求一次权限。",
+        weather: "天气",
+        weatherCaption: "天气预报来自 Open-Meteo，每 30 分钟更新一次。只发送你添加的城市坐标，无需账号，不涉及你的任何信息。",
+        noForecast: "暂无预报",
+        condClear: "晴",
+        condPartlyCloudy: "局部多云",
+        condCloudy: "多云",
+        condFog: "雾",
+        condDrizzle: "毛毛雨",
+        condRain: "雨",
+        condSnow: "雪",
+        condShowers: "阵雨",
+        condThunderstorm: "雷暴"
     )
 
     static let zhTW = DesktopWidgetsFeatureStrings(
@@ -696,7 +852,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "昨天",
         accessories: "配件",
         noAccessories: "找不到配件",
-        accessoriesCaption: "Apple 鍵盤、觸控板和滑鼠直接讀取。其他配件使用藍牙，macOS 可能會要求一次權限。"
+        accessoriesCaption: "Apple 鍵盤、觸控板和滑鼠直接讀取。其他配件使用藍牙，macOS 可能會要求一次權限。",
+        weather: "天氣",
+        weatherCaption: "天氣預報來自 Open-Meteo，每 30 分鐘更新一次。只會傳送你加入的城市座標，不需帳號，不涉及你的任何資訊。",
+        noForecast: "尚無預報",
+        condClear: "晴",
+        condPartlyCloudy: "局部多雲",
+        condCloudy: "多雲",
+        condFog: "霧",
+        condDrizzle: "毛毛雨",
+        condRain: "雨",
+        condSnow: "雪",
+        condShowers: "陣雨",
+        condThunderstorm: "雷雨"
     )
 
     static let zhHK = DesktopWidgetsFeatureStrings(
@@ -744,7 +912,19 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "昨天",
         accessories: "配件",
         noAccessories: "找不到配件",
-        accessoriesCaption: "Apple 鍵盤、觸控板和滑鼠直接讀取。其他配件使用藍牙，macOS 可能會要求一次權限。"
+        accessoriesCaption: "Apple 鍵盤、觸控板和滑鼠直接讀取。其他配件使用藍牙，macOS 可能會要求一次權限。",
+        weather: "天氣",
+        weatherCaption: "天氣預報來自 Open-Meteo，每 30 分鐘更新一次。只會傳送你加入的城市座標，不需帳戶，不涉及你的任何資料。",
+        noForecast: "尚未有預報",
+        condClear: "晴",
+        condPartlyCloudy: "局部多雲",
+        condCloudy: "多雲",
+        condFog: "霧",
+        condDrizzle: "毛毛雨",
+        condRain: "雨",
+        condSnow: "雪",
+        condShowers: "驟雨",
+        condThunderstorm: "雷暴"
     )
 
     static let uk = DesktopWidgetsFeatureStrings(
@@ -792,6 +972,18 @@ extension DesktopWidgetsFeatureStrings {
         yesterdayLabel: "Учора",
         accessories: "Аксесуари",
         noAccessories: "Аксесуарів не знайдено",
-        accessoriesCaption: "Клавіатури, трекпади й миші Apple читаються напряму. Інші аксесуари використовують Bluetooth, і macOS може один раз попросити дозвіл."
+        accessoriesCaption: "Клавіатури, трекпади й миші Apple читаються напряму. Інші аксесуари використовують Bluetooth, і macOS може один раз попросити дозвіл.",
+        weather: "Погода",
+        weatherCaption: "Прогноз Open-Meteo кожні 30 хвилин. Надсилаються лише координати доданих міст; без облікового запису й без даних про вас.",
+        noForecast: "Прогнозу ще немає",
+        condClear: "Ясно",
+        condPartlyCloudy: "Мінлива хмарність",
+        condCloudy: "Хмарно",
+        condFog: "Туман",
+        condDrizzle: "Мряка",
+        condRain: "Дощ",
+        condSnow: "Сніг",
+        condShowers: "Зливи",
+        condThunderstorm: "Гроза"
     )
 }
