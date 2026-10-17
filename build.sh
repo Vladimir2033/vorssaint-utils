@@ -684,9 +684,17 @@ if (( WIDGETS )); then
     echo "▸ Compiling desktop widgets extension…"
     # Only what the sandboxed extension needs: the snapshot model and its
     # store. It never links the app's services.
+    #
+    # The entry point is NSExtensionMain, as Xcode links every app extension.
+    # With the plain Swift `main` the process started, ran WidgetBundle.main
+    # and logged its extension type, then never answered chronod's query for
+    # its widgets, so the gallery listed nothing (seen on macOS 26, 16/10).
+    # An Xcode-built widget on the same Mac imports _NSExtensionMain; ours did
+    # not. The Swift `main` stays in the binary, as it does in theirs.
     swiftc "${APP_OPTIMIZATION_FLAGS[@]}" -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" \
         "${BUILD_VARIANT_FLAGS[@]}" -application-extension -parse-as-library \
         -module-name VorssaintWidgets \
+        -Xlinker -e -Xlinker _NSExtensionMain \
         Sources/VorssaintWidgets/*.swift \
         Sources/Vorssaint/Services/Widgets/WidgetSnapshot.swift \
         Sources/Vorssaint/Services/Widgets/WidgetSnapshotThrottle.swift \
@@ -801,10 +809,15 @@ if (( WIDGETS )); then
     APP_SHORT_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$STAGE/Contents/Info.plist")"
     APP_BUILD_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$STAGE/Contents/Info.plist")"
     # An extension whose version differs from its app is flagged by macOS.
+    # Xcode also records the platform and SDK in every extension it builds;
+    # keep ours shaped the same so nothing keys off their absence.
+    WIDGET_SDK_NAME="$(/usr/libexec/PlistBuddy -c "Print :CanonicalName" "$SDK/SDKSettings.plist" 2>/dev/null || echo macosx)"
     /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $WIDGET_EXTENSION_ID" \
         -c "Set :CFBundleShortVersionString $APP_SHORT_VERSION" \
         -c "Set :CFBundleVersion $APP_BUILD_VERSION" \
         -c "Add :VorssaintAppGroup string $WIDGET_APP_GROUP" \
+        -c "Add :DTPlatformName string macosx" \
+        -c "Add :DTSDKName string $WIDGET_SDK_NAME" \
         "$APPEX/Contents/Info.plist"
     /usr/libexec/PlistBuddy -c "Add :VorssaintAppGroup string $WIDGET_APP_GROUP" "$STAGE/Contents/Info.plist"
 fi
