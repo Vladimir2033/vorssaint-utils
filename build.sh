@@ -352,6 +352,7 @@ if (( TEST )); then
         Sources/Vorssaint/Services/Widgets/WidgetSnapshot.swift
         Sources/Vorssaint/Services/Widgets/WidgetSnapshotBuilder.swift
         Sources/Vorssaint/Services/Widgets/WidgetSnapshotThrottle.swift
+        Sources/Vorssaint/Services/Widgets/WidgetAgenda.swift
         Sources/Vorssaint/Services/AgentUsage/AgentUsageModels.swift
         Sources/Vorssaint/Services/AgentUsage/AgentPricing.swift
         Sources/Vorssaint/Services/AgentUsage/AgentLogObject.swift
@@ -698,6 +699,7 @@ if (( WIDGETS )); then
         Sources/VorssaintWidgets/*.swift \
         Sources/Vorssaint/Services/Widgets/WidgetSnapshot.swift \
         Sources/Vorssaint/Services/Widgets/WidgetSnapshotThrottle.swift \
+        Sources/Vorssaint/Services/Widgets/WidgetAgenda.swift \
         Sources/Vorssaint/Services/Widgets/WidgetAppGroup.swift \
         Sources/Vorssaint/Services/PrivateFileStore.swift \
         -o build/VorssaintWidgets
@@ -806,6 +808,12 @@ if (( WIDGETS )); then
     mkdir -p "$APPEX/Contents/MacOS"
     cp build/VorssaintWidgets "$APPEX/Contents/MacOS/VorssaintWidgets"
     cp Resources/Widgets/Info.plist "$APPEX/Contents/Info.plist"
+    # The widgets' own strings: English is the source text in the code, so
+    # only translations ship. Other app languages fall back to English.
+    mkdir -p "$APPEX/Contents/Resources"
+    for lproj in Resources/Widgets/*.lproj(N); do
+        cp -R "$lproj" "$APPEX/Contents/Resources/"
+    done
     APP_SHORT_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$STAGE/Contents/Info.plist")"
     APP_BUILD_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$STAGE/Contents/Info.plist")"
     # An extension whose version differs from its app is flagged by macOS.

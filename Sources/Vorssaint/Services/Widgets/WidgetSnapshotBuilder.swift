@@ -32,6 +32,18 @@ struct WidgetSnapshotInputs {
         var timeRemainingSeconds: TimeInterval?
     }
 
+    struct AgendaEvent {
+        var title: String
+        var calendarName: String
+        var location: String
+        var start: Date
+        var end: Date
+        var allDay: Bool
+        var red: Double
+        var green: Double
+        var blue: Double
+    }
+
     struct ClipboardEntry {
         var kind: WidgetSnapshot.ClipboardItem.Kind
         var text: String
@@ -65,21 +77,33 @@ struct WidgetSnapshotInputs {
 
     var playback: Playback?
 
+    /// nil when the calendar was never read (no snapshot section at all).
+    var agendaAccessGranted: Bool?
+    var agendaEvents: [AgendaEvent] = []
+    /// The person's choice; on by default, off keeps titles and places off the desk.
+    var showsEventTitles = true
+
     var clipboard: [ClipboardEntry] = []
     /// The person's choice; off by default because history can hold private text.
     var showsClipboard = false
 }
 
 enum WidgetSnapshotBuilder {
-    /// One point per 15 minutes over six hours is what the medium widget draws.
-    static let historyPoints = 24
+    /// One point per snapshot write, about a minute apart: half an hour of CPU.
+    static let historyPoints = 30
+    /// A week of events, for the strip of days; only today's and tomorrow's
+    /// carry a title or a place.
+    static let maxAgendaEvents = 40
+    static let maxEventTitleCharacters = 80
+    static let maxEventLocationCharacters = 60
     static let maxPeripherals = 3
     static let maxAgentWindows = 3
     static let maxClipboardItems = 3
     static let maxPreviewCharacters = 60
     static let maxTrackCharacters = 80
 
-    static func build(_ inputs: WidgetSnapshotInputs, now: Date) -> WidgetSnapshot {
+    static func build(_ inputs: WidgetSnapshotInputs, now: Date,
+                      calendar: Calendar = .current) -> WidgetSnapshot {
         WidgetSnapshot(
             generatedAt: now,
             system: system(inputs),
@@ -88,6 +112,7 @@ enum WidgetSnapshotBuilder {
                 isActive: inputs.keepAwakeActive,
                 endsAt: inputs.keepAwakeActive ? inputs.keepAwakeEnd : nil),
             agents: agents(inputs),
+            agenda: agenda(inputs, now: now, calendar: calendar),
             nowPlaying: nowPlaying(inputs.playback),
             clipboard: inputs.showsClipboard ? clipboard(inputs.clipboard) : [])
     }
@@ -139,6 +164,34 @@ enum WidgetSnapshotBuilder {
         return WidgetSnapshot.Agents(windows: windows,
                                      todayTokens: inputs.agentTodayTokens.map { max(0, $0) },
                                      liveSessions: max(0, inputs.agentLiveSessions))
+    }
+
+    private static func agenda(_ inputs: WidgetSnapshotInputs, now: Date,
+                               calendar: Calendar) -> WidgetSnapshot.Agenda? {
+        guard let granted = inputs.agendaAccessGranted else { return nil }
+        guard granted else { return WidgetSnapshot.Agenda(accessGranted: false) }
+        // Text leaves the app only for the two days a widget lists; the rest
+        // of the week is only there to mark which days are busy.
+        let textUntil = calendar.date(byAdding: .day, value: 2, to: calendar.startOfDay(for: now))
+            ?? now.addingTimeInterval(2 * 86_400)
+        let events = inputs.agendaEvents
+            .filter { $0.end >= $0.start && $0.start.timeIntervalSince1970.isFinite }
+            .prefix(maxAgendaEvents)
+            .map { event -> WidgetSnapshot.AgendaEvent in
+                WidgetSnapshot.AgendaEvent(
+                    title: inputs.showsEventTitles && event.start < textUntil
+                        ? truncated(collapsed(event.title), to: maxEventTitleCharacters) : "",
+                    calendarName: truncated(collapsed(event.calendarName), to: maxEventTitleCharacters),
+                    location: inputs.showsEventTitles && event.start < textUntil
+                        ? truncated(collapsed(event.location), to: maxEventLocationCharacters) : "",
+                    start: event.start, end: event.end, allDay: event.allDay,
+                    red: unit(event.red), green: unit(event.green), blue: unit(event.blue))
+            }
+        return WidgetSnapshot.Agenda(accessGranted: true, events: Array(events))
+    }
+
+    private static func unit(_ value: Double) -> Double {
+        value.isFinite ? min(1, max(0, value)) : 0
     }
 
     private static func nowPlaying(_ playback: WidgetSnapshotInputs.Playback?) -> WidgetSnapshot.NowPlaying? {

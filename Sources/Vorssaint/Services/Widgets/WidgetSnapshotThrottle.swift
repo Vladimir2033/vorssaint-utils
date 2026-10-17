@@ -21,6 +21,10 @@ struct WidgetSnapshotThrottle {
         var trackTitle: String?
         var isPlaying: Bool
         var latestCopyAt: Date?
+        /// Start and end of every event, so an edited, added or removed event
+        /// reaches the desk at once instead of after the interval.
+        var agendaStamp: [TimeInterval]
+        var agendaAccess: Bool?
 
         init(_ snapshot: WidgetSnapshot) {
             keepAwakeActive = snapshot.keepAwake.isActive
@@ -28,6 +32,10 @@ struct WidgetSnapshotThrottle {
             trackTitle = snapshot.nowPlaying?.title
             isPlaying = snapshot.nowPlaying?.isPlaying ?? false
             latestCopyAt = snapshot.clipboard.first?.copiedAt
+            agendaStamp = (snapshot.agenda?.events ?? []).flatMap {
+                [$0.start.timeIntervalSince1970, $0.end.timeIntervalSince1970]
+            }
+            agendaAccess = snapshot.agenda?.accessGranted
         }
     }
 

@@ -144,6 +144,7 @@ final class SystemMonitor: ObservableObject {
     private var notchVisible = false
     private var notchDetailNeeds: SystemMonitorPanelNeeds = .none
     private var notchAccessoryMonitoring = false
+    private var widgetsMonitoring = false
     private var menuBarActive = false
     private var alertsActive = false
     private var refreshInFlight = false
@@ -279,6 +280,19 @@ final class SystemMonitor: ObservableObject {
         runOnMain { [weak self] in
             guard let self, self.notchAccessoryMonitoring != enabled else { return }
             self.notchAccessoryMonitoring = enabled
+            self.stopTimerIfIdle()
+            self.ensureTimer()
+            if enabled { self.refresh(suppressImmediateGPU: true) }
+        }
+    }
+
+    /// The desktop widgets read CPU, graphics, memory, network, disk and the
+    /// CPU temperature, on the slow background cadence: no panel is open, so
+    /// nothing here is foreground work.
+    func setWidgetsMonitoring(_ enabled: Bool) {
+        runOnMain { [weak self] in
+            guard let self, self.widgetsMonitoring != enabled else { return }
+            self.widgetsMonitoring = enabled
             self.stopTimerIfIdle()
             self.ensureTimer()
             if enabled { self.refresh(suppressImmediateGPU: true) }
@@ -464,7 +478,7 @@ final class SystemMonitor: ObservableObject {
     /// independent surfaces cannot desync.
     private var fullMonitorVisible: Bool { panelClients > 0 }
 
-    private var shouldRun: Bool { fullMonitorVisible || menuPanelNeeds.any || notchDetailNeeds.any || notchVisible || notchAccessoryMonitoring || menuBarActive || alertsActive }
+    private var shouldRun: Bool { fullMonitorVisible || menuPanelNeeds.any || notchDetailNeeds.any || notchVisible || notchAccessoryMonitoring || widgetsMonitoring || menuBarActive || alertsActive }
 
     private func shouldSample(defaults: UserDefaults = .standard) -> Bool {
         shouldRun && currentPlan(defaults: defaults).any
@@ -537,15 +551,17 @@ final class SystemMonitor: ObservableObject {
         let alertDisk = defaults.bool(forKey: DefaultsKey.monitorAlertDisk)
         let alertBattery = hasInternalBattery && defaults.bool(forKey: DefaultsKey.monitorAlertBattery)
 
-        plan.needCPU = panelCPU || defaults.bool(forKey: DefaultsKey.menuBarCPU) || alertCPU
+        plan.needCPU = panelCPU || defaults.bool(forKey: DefaultsKey.menuBarCPU) || alertCPU || widgetsMonitoring
         // Per-core bars live under the panel's CPU row only: a CPU shown in the
         // menu bar or watched by an alert never reads every core.
         plan.needCPUCores = menuPanelNeeds.system
             && defaults.bool(forKey: DefaultsKey.monitorSysCPU)
             && defaults.bool(forKey: DefaultsKey.monitorSysCPUCores)
         plan.needMemory = panelMemory || defaults.bool(forKey: DefaultsKey.menuBarMemory) || alertMemory
+            || widgetsMonitoring
         plan.needNetwork = panelNeedsNetwork || defaults.bool(forKey: DefaultsKey.menuBarNetwork)
-        plan.needDisk = panelNeedsDisk
+            || widgetsMonitoring
+        plan.needDisk = panelNeedsDisk || widgetsMonitoring
             || defaults.bool(forKey: DefaultsKey.menuBarDiskUsage)
             || defaults.bool(forKey: DefaultsKey.menuBarDiskActivity)
             || alertDisk
@@ -557,9 +573,9 @@ final class SystemMonitor: ObservableObject {
         plan.needPowerDraw = defaults.bool(forKey: DefaultsKey.menuBarPower)
         plan.needPeripheralBattery = menuPanelNeeds.peripheralBattery || notchAccessoryMonitoring
             || defaults.bool(forKey: DefaultsKey.menuBarPeripheralBattery)
-        plan.needGPUUsage = panelGPU || defaults.bool(forKey: DefaultsKey.menuBarGPU)
+        plan.needGPUUsage = panelGPU || defaults.bool(forKey: DefaultsKey.menuBarGPU) || widgetsMonitoring
         plan.needCPUTemperature = panelTemps || menuPanelNeeds.cpuTemperature ||
-            defaults.bool(forKey: DefaultsKey.menuBarCPUTemperature) || alertCPUTemperature
+            defaults.bool(forKey: DefaultsKey.menuBarCPUTemperature) || alertCPUTemperature || widgetsMonitoring
         plan.needGPUTemperature = panelTemps || menuPanelNeeds.gpuTemperature ||
             defaults.bool(forKey: DefaultsKey.menuBarGPUTemperature)
         plan.needBatteryTemperature = hasInternalBattery && (

@@ -13,6 +13,7 @@ enum SystemMonitorPlanTests {
         var fullMonitorVisible = false
         var notchVisible = false
         var notchAccessoryMonitoring = false
+        var widgetsMonitoring = false
         static var fanTelemetryAvailable: Bool { true }
     }
 
@@ -74,5 +75,27 @@ enum SystemMonitorPlanTests {
         defaults.set(false, forKey: AppFeature.monitorCPU.availabilityKey)
         suite.expect(!monitor.currentPlan(defaults: defaults).needCPUCores,
                      "an uninstalled CPU monitor does not read every core")
+
+        // The desktop widgets are a background consumer of the readings they show.
+        monitor.menuPanelNeeds = .none
+        monitor.fullMonitorVisible = false
+        defaults.set(false, forKey: DefaultsKey.menuBarCPU)
+        for feature in [AppFeature.monitorCPU, .monitorGPU, .monitorMemory, .monitorNetwork, .monitorDisk] {
+            defaults.set(true, forKey: feature.availabilityKey)
+        }
+        let quiet = monitor.currentPlan(defaults: defaults)
+        suite.expect(!quiet.needCPU && !quiet.needGPUUsage && !quiet.needMemory && !quiet.needNetwork
+                         && !quiet.needDisk && !quiet.needCPUTemperature,
+                     "nothing is read for the desktop widgets while they are not on")
+        monitor.widgetsMonitoring = true
+        let desk = monitor.currentPlan(defaults: defaults)
+        suite.expect(desk.needCPU && desk.needGPUUsage && desk.needMemory && desk.needNetwork
+                         && desk.needDisk && desk.needCPUTemperature,
+                     "the desktop widgets read CPU, graphics, memory, network, disk and CPU temperature")
+        suite.expect(!desk.needPower && !desk.needFanSpeed && !desk.needConnectedDevices && !desk.needCPUCores,
+                     "the desktop widgets read no power, fans, USB devices or per-core load")
+        defaults.set(false, forKey: AppFeature.monitorMemory.availabilityKey)
+        suite.expect(!monitor.currentPlan(defaults: defaults).needMemory,
+                     "an uninstalled memory monitor is not read for the desktop widgets either")
     }
 }

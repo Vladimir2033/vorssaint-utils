@@ -24,13 +24,17 @@ struct WidgetSnapshot: Codable, Equatable {
     var power: Power?
     var keepAwake: KeepAwake
     var agents: Agents?
+    var agenda: Agenda?
     var nowPlaying: NowPlaying?
     /// Empty unless the person turned the clipboard widget on.
     var clipboard: [ClipboardItem] = []
 
     struct System: Codable, Equatable {
         var cpuPercent: Int?
-        /// Oldest first, 0...100, at most `WidgetSnapshotBuilder.historyPoints`.
+        /// Oldest first, 0...100, one point per snapshot write (about a
+        /// minute apart), at most `WidgetSnapshotBuilder.historyPoints`. It
+        /// restarts empty with the app: it is what the app has seen, not a
+        /// log kept on disk.
         var cpuHistory: [Int] = []
         var gpuPercent: Int?
         var memoryPercent: Int?
@@ -71,6 +75,29 @@ struct WidgetSnapshot: Codable, Equatable {
         var label: String
         var usedPercent: Int
         var resetsAt: Date?
+    }
+
+    /// Today's and tomorrow's events, already filtered by the calendars the
+    /// person left out of the island. `accessGranted` false means the app has
+    /// no calendar permission, which the widget tells apart from an empty day.
+    struct Agenda: Codable, Equatable {
+        var accessGranted: Bool
+        var events: [AgendaEvent] = []
+    }
+
+    struct AgendaEvent: Codable, Equatable {
+        /// Empty when the person chose to keep event titles off the desk.
+        var title: String
+        var calendarName: String
+        /// Empty when titles are kept off the desk.
+        var location: String
+        var start: Date
+        var end: Date
+        var allDay: Bool
+        /// The calendar's colour, 0...1.
+        var red: Double
+        var green: Double
+        var blue: Double
     }
 
     struct NowPlaying: Codable, Equatable {

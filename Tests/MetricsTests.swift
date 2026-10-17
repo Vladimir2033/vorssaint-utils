@@ -22,7 +22,10 @@ struct MetricsTests {
                 SystemMonitorPlanTests.run(suite)
                 SystemSectionBreakdownTests.run(suite)
             }),
-            ("widgets", { WidgetSnapshotTests.run(suite) }),
+            ("widgets", {
+                WidgetSnapshotTests.run(suite)
+                WidgetAgendaTests.run(suite)
+            }),
             ("clipboard", {
                 ClipboardFeatureTests.run(suite)
                 PastePlainTests.run(suite)
