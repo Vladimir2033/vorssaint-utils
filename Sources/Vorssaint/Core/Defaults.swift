@@ -853,6 +853,13 @@ enum DefaultsKey {
     static let notchCalendarWeekNumbers = "notchCalendarWeekNumbers" // the month grid numbers its weeks
     static let notchCalendarExcluded = "notchCalendarExcluded" // [EKCalendar.calendarIdentifier] left out of the island
     static let widgetCalendarShowsTitles = "widgetCalendarShowsTitles" // desktop widgets show event titles and places; off shows only the time
+    static let desktopWidgetSystem = "desktopWidgetSystem"
+    static let desktopWidgetSystemCompact = "desktopWidgetSystemCompact"
+    static let desktopWidgetAgenda = "desktopWidgetAgenda"
+    static let desktopWidgetNextEvent = "desktopWidgetNextEvent"
+    /// [DesktopWidgetKind.rawValue: "x,y"], where each card was left. Screen
+    /// coordinates of this Mac, so deliberately not registered and not exported.
+    static let desktopWidgetOrigins = "desktopWidgetOrigins"
     // [countdown key: event end] chosen from an event's menu; unregistered, so it stays out of backups
     static let notchCalendarChosenCountdowns = "notchCalendarChosenCountdowns"
     // AI agents: what the island reads from Claude Code, Codex, OpenCode and GitHub Copilot, and shows.
@@ -1437,6 +1444,10 @@ enum Defaults {
         DefaultsKey.notchCalendarWeekNumbers: false,
         DefaultsKey.notchCalendarExcluded: [String](),
         DefaultsKey.widgetCalendarShowsTitles: true,
+        DefaultsKey.desktopWidgetSystem: false,
+        DefaultsKey.desktopWidgetSystemCompact: false,
+        DefaultsKey.desktopWidgetAgenda: false,
+        DefaultsKey.desktopWidgetNextEvent: false,
         DefaultsKey.notchAgentsEnabled: false,
         DefaultsKey.notchAgentsClaude: true,
         DefaultsKey.notchAgentsCodex: true,

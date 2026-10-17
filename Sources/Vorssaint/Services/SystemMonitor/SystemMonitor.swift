@@ -144,7 +144,10 @@ final class SystemMonitor: ObservableObject {
     private var notchVisible = false
     private var notchDetailNeeds: SystemMonitorPanelNeeds = .none
     private var notchAccessoryMonitoring = false
-    private var widgetsMonitoring = false
+    /// Who wants the readings the widgets show: the desktop cards, the macOS
+    /// widget extension. Each turns itself on and off without the other's say.
+    private var widgetConsumers = Set<String>()
+    private var widgetsMonitoring: Bool { !widgetConsumers.isEmpty }
     private var menuBarActive = false
     private var alertsActive = false
     private var refreshInFlight = false
@@ -292,13 +295,15 @@ final class SystemMonitor: ObservableObject {
     /// are not asked for: reading them uses Bluetooth, and a widget should not
     /// be what raises that permission prompt. The widget shows them only while
     /// another surface already keeps them fresh.
-    func setWidgetsMonitoring(_ enabled: Bool) {
+    func setWidgetsMonitoring(_ enabled: Bool, consumer: String) {
         runOnMain { [weak self] in
-            guard let self, self.widgetsMonitoring != enabled else { return }
-            self.widgetsMonitoring = enabled
+            guard let self else { return }
+            let before = self.widgetsMonitoring
+            if enabled { self.widgetConsumers.insert(consumer) } else { self.widgetConsumers.remove(consumer) }
+            guard self.widgetsMonitoring != before else { return }
             self.stopTimerIfIdle()
             self.ensureTimer()
-            if enabled { self.refresh(suppressImmediateGPU: true) }
+            if self.widgetsMonitoring { self.refresh(suppressImmediateGPU: true) }
         }
     }
 

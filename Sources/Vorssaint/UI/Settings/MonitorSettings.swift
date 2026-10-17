@@ -55,6 +55,8 @@ struct MonitorSettings: View {
                 groupHeading(FeatureStrings.monitorLayout(l10n.language).shared, symbol: "slider.horizontal.3")
                 readingsCard
                 alertsCard
+                groupHeading(FeatureStrings.desktopWidgets(l10n.language).cardTitle, symbol: "rectangle.3.group")
+                DesktopWidgetsCard()
             }
             .frame(maxWidth: 760)
             .frame(maxWidth: .infinity)
