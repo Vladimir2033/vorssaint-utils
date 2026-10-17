@@ -63,6 +63,14 @@ struct WidgetSnapshot: Codable, Equatable {
         var isActive: Bool
         /// nil while active means indefinite.
         var endsAt: Date?
+
+        /// A session that ended while the app was closed is over, whatever the
+        /// last snapshot said.
+        func isOn(at now: Date) -> Bool {
+            guard isActive else { return false }
+            if let endsAt { return endsAt > now }
+            return true
+        }
     }
 
     struct Agents: Codable, Equatable {
@@ -71,8 +79,13 @@ struct WidgetSnapshot: Codable, Equatable {
         var liveSessions: Int
     }
 
+    /// One allowance an agent reports. The widget words it from these parts
+    /// so the kind can follow the Mac's language while the product name stays.
     struct LimitWindow: Codable, Equatable {
-        var label: String
+        var provider: String
+        /// "session", "weekly" or "other".
+        var kind: String
+        var minutes: Int?
         var usedPercent: Int
         var resetsAt: Date?
     }

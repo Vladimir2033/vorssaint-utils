@@ -25,6 +25,9 @@ struct WidgetSnapshotThrottle {
         /// reaches the desk at once instead of after the interval.
         var agendaStamp: [TimeInterval]
         var agendaAccess: Bool?
+        /// Plugging in or unplugging is something to see at once.
+        var charging: Bool?
+        var externalPower: Bool?
 
         init(_ snapshot: WidgetSnapshot) {
             keepAwakeActive = snapshot.keepAwake.isActive
@@ -36,6 +39,8 @@ struct WidgetSnapshotThrottle {
                 [$0.start.timeIntervalSince1970, $0.end.timeIntervalSince1970]
             }
             agendaAccess = snapshot.agenda?.accessGranted
+            charging = snapshot.power?.isCharging
+            externalPower = snapshot.power?.externalConnected
         }
     }
 

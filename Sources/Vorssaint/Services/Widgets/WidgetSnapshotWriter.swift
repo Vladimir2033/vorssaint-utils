@@ -8,8 +8,9 @@ import WidgetKit
 
 /// Keeps the widgets' snapshot current while the app runs.
 ///
-/// Wave 1 of the desktop widgets: system readings and the calendar agenda.
-/// Builds without `--widgets` have no App Group and this does nothing, so it
+/// System readings, battery, Keep Awake, the calendar agenda and AI usage.
+/// Agent usage is read from the service the island already runs; the widget
+/// never starts that reading of the agents' logs by itself. Builds without `--widgets` have no App Group and this does nothing, so it
 /// never asks the system monitor to sample and never touches EventKit.
 final class WidgetSnapshotWriter {
     static let shared = WidgetSnapshotWriter()
@@ -59,6 +60,11 @@ final class WidgetSnapshotWriter {
             var inputs = self.systemInputs(recordsHistory: recordsHistory)
             inputs.keepAwakeActive = KeepAwakeManager.shared.isActive
             inputs.keepAwakeEnd = KeepAwakeManager.shared.endDate
+            let agents = self.agentInputs()
+            inputs.agentsLoaded = agents.loaded
+            inputs.agentWindows = agents.windows
+            inputs.agentTodayTokens = agents.loaded ? agents.todayTokens : nil
+            inputs.agentLiveSessions = agents.liveSessions
             let agenda = await self.readAgenda()
             guard !Task.isCancelled else { return }
             inputs.showsEventTitles = UserDefaults.standard.bool(forKey: DefaultsKey.widgetCalendarShowsTitles)
@@ -92,7 +98,46 @@ final class WidgetSnapshotWriter {
         inputs.netUpBytesPerSec = reading.netUpBytesPerSec
         let disk = reading.disk?.devices.first(where: \.isInternal) ?? reading.disk?.devices.first
         inputs.diskFreeBytes = disk?.freeBytes
+        inputs.power = reading.power.map {
+            WidgetSnapshotInputs.Power(hasBattery: $0.hasBattery, chargePercent: $0.chargePercent,
+                                       isCharging: $0.isCharging, externalConnected: $0.externalConnected,
+                                       timeRemainingSeconds: $0.timeRemainingSeconds)
+        }
+        let uptime = ProcessInfo.processInfo.systemUptime
+        inputs.peripherals = reading.peripheralBatteries.compactMap { device in
+            guard let observed = reading.peripheralBatterySample.observedAt[device.id] else { return nil }
+            return WidgetSnapshotInputs.Peripheral(name: device.name, percent: device.percent,
+                                                   secondsSinceRead: uptime - observed)
+        }
         return inputs
+    }
+
+    /// The limits the agents report for everything they cover (no single
+    /// model), the day's tokens and the sessions under way. Nothing until the
+    /// island's AI section has read the logs.
+    private func agentInputs() -> (loaded: Bool, windows: [WidgetSnapshotInputs.LimitWindow],
+                                   todayTokens: Int, liveSessions: Int) {
+        let usage = AgentUsageService.shared.snapshot
+        guard usage.loaded else { return (false, [], 0, 0) }
+        func rank(_ window: AgentLimitWindow) -> Int {
+            switch window.kind {
+            case .session: return 0
+            case .weekly: return 1
+            case .other: return 2
+            }
+        }
+        let windows = AgentProvider.allCases.flatMap { provider -> [WidgetSnapshotInputs.LimitWindow] in
+            (usage.limits[provider]?.windows ?? [])
+                .filter { $0.scope == nil }
+                .sorted { rank($0) < rank($1) }
+                .prefix(2)
+                .map {
+                    WidgetSnapshotInputs.LimitWindow(provider: provider.displayName, kind: $0.kind.rawValue,
+                                                     minutes: $0.minutes, usedPercent: $0.usedPercent,
+                                                     resetsAt: $0.resetsAt)
+                }
+        }
+        return (true, windows, usage.usage(.today).total.tokens.total, usage.live.count)
     }
 
     private static func pressureName(_ pressure: MemoryPressure) -> String? {

@@ -22,7 +22,20 @@ enum WidgetSample {
                 cpuHistory: [12, 14, 11, 18, 22, 19, 15, 13, 16, 24, 31, 27, 20, 17, 15, 19, 26, 22, 18, 16, 21, 25, 23],
                 gpuPercent: 9, memoryPercent: 61, memoryPressure: "normal", cpuTemperatureCelsius: 48,
                 netDownBytesPerSec: 4_200_000, netUpBytesPerSec: 600_000, diskFreeBytes: 312_000_000_000),
-            keepAwake: WidgetSnapshot.KeepAwake(isActive: false, endsAt: nil),
+            power: WidgetSnapshot.Power(
+                hasBattery: true, chargePercent: 82, isCharging: false, externalConnected: false,
+                timeRemainingSeconds: 5 * 3600 + 20 * 60,
+                peripherals: [WidgetSnapshot.Peripheral(name: "Mouse", percent: 18),
+                              WidgetSnapshot.Peripheral(name: "Headphones", percent: 64)]),
+            keepAwake: WidgetSnapshot.KeepAwake(isActive: true, endsAt: now.addingTimeInterval(4 * 3600)),
+            agents: WidgetSnapshot.Agents(
+                windows: [WidgetSnapshot.LimitWindow(provider: "Claude", kind: "session", minutes: 300,
+                                                     usedPercent: 72, resetsAt: now.addingTimeInterval(2 * 3600)),
+                          WidgetSnapshot.LimitWindow(provider: "Claude", kind: "weekly", minutes: 10_080,
+                                                     usedPercent: 38, resetsAt: now.addingTimeInterval(3 * 86_400)),
+                          WidgetSnapshot.LimitWindow(provider: "Codex", kind: "session", minutes: 300,
+                                                     usedPercent: 12, resetsAt: now.addingTimeInterval(4 * 3600))],
+                todayTokens: 1_900_000, liveSessions: 2),
             agenda: WidgetSnapshot.Agenda(accessGranted: true, events: [
                 event("Team sync", "Work", hours: -1.5, length: 1, red: 0.18, green: 0.44, blue: 0.9),
                 event("Lunch", "Personal", hours: 0.5, length: 1, red: 0.9, green: 0.28, blue: 0.3),

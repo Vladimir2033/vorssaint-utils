@@ -13,11 +13,12 @@ struct SnapshotEntry: TimelineEntry {
     let containerReachable: Bool
 }
 
-/// Reads the app's snapshot for every widget. Calendar widgets also ask for
-/// an entry at each moment an event starts or ends and at midnight, so "now"
-/// and "past" move without the app running.
+/// Reads the app's snapshot for every widget. A widget whose picture changes
+/// at known moments (an event starting, Keep Awake ending) names them in
+/// `moments` and gets an entry at each, so "now" and "past" move without the
+/// app running.
 struct SnapshotProvider: TimelineProvider {
-    var followsCalendar = false
+    var moments: ((WidgetSnapshot, Date) -> [Date])?
 
     func placeholder(in context: Context) -> SnapshotEntry {
         SnapshotEntry(date: Date(), snapshot: WidgetSample.snapshot(at: Date()), containerReachable: true)
@@ -35,14 +36,9 @@ struct SnapshotProvider: TimelineProvider {
         let now = Date()
         let first = load(at: now)
         var entries = [first]
-        if followsCalendar {
-            var moments = WidgetAgenda.boundaries(first.snapshot?.agenda?.events ?? [], now: now, limit: 12)
-            if let midnight = Calendar.current.nextDate(after: now, matching: DateComponents(hour: 0, minute: 0),
-                                                        matchingPolicy: .nextTime) {
-                moments.append(midnight)
-            }
-            for moment in Set(moments).sorted() {
-                entries.append(SnapshotEntry(date: moment, snapshot: first.snapshot,
+        if let moments, let snapshot = first.snapshot {
+            for moment in Set(moments(snapshot, now).filter { $0 > now }).sorted() {
+                entries.append(SnapshotEntry(date: moment, snapshot: snapshot,
                                              containerReachable: first.containerReachable))
             }
         }

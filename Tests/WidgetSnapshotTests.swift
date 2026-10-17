@@ -91,20 +91,33 @@ enum WidgetSnapshotTests {
                      "an unknown total never divides by zero")
 
         inputs.power = .init(hasBattery: true, chargePercent: 140, isCharging: true, timeRemainingSeconds: -1)
-        inputs.peripherals = [("Fone", 64), ("  ", 10), ("Mouse", -3), ("Teclado", 80), ("Caneta", 50)]
+        func device(_ name: String, _ percent: Int, age: TimeInterval = 30) -> WidgetSnapshotInputs.Peripheral {
+            .init(name: name, percent: percent, secondsSinceRead: age)
+        }
+        inputs.peripherals = [device("Fone", 64), device("  ", 10), device("Mouse", -3), device("Teclado", 80),
+                              device("Caneta", 50), device("Velho", 5, age: 3600), device("Quebrado", 5, age: .nan)]
         let power = WidgetSnapshotBuilder.build(inputs, now: now).power
         suite.expect(power?.chargePercent == 100, "charge never shows above 100%")
         suite.expect(power?.timeRemainingSeconds == nil, "an unknown estimate is left out")
-        suite.expect(power?.peripherals.map(\.name) == ["Fone", "Mouse", "Teclado"],
-                     "the first three named devices, unnamed ones skipped: \(power?.peripherals ?? [])")
-        suite.expect(power?.peripherals.dropFirst().first?.percent == 0, "a negative percent shows as empty")
+        suite.expect(power?.peripherals.map(\.name) == ["Mouse", "Caneta", "Fone"],
+                     "the three lowest batteries, unnamed, stale and unreadable ones left out: \(power?.peripherals ?? [])")
+        suite.expect(power?.peripherals.first?.percent == 0, "a negative percent shows as empty")
 
-        inputs.agentWindows = [.init(label: "5 h", usedPercent: 72.4, resetsAt: now), .init(label: "bad", usedPercent: .nan)]
+        let later = now.addingTimeInterval(3600)
+        inputs.agentWindows = [
+            .init(provider: "Claude", kind: "session", minutes: 300, usedPercent: 72.4, resetsAt: later),
+            .init(provider: "Claude", kind: "weekly", minutes: nil, usedPercent: .nan, resetsAt: later),
+            .init(provider: "Codex", kind: "session", minutes: 300, usedPercent: 90, resetsAt: now.addingTimeInterval(-60)),
+            .init(provider: "Codex", kind: "weekly", minutes: nil, usedPercent: 130, resetsAt: nil),
+        ]
         suite.expect(WidgetSnapshotBuilder.build(inputs, now: now).agents == nil,
                      "agent usage waits until the history has loaded")
         inputs.agentsLoaded = true
         let agents = WidgetSnapshotBuilder.build(inputs, now: now).agents
-        suite.expect(agents?.windows.map(\.usedPercent) == [72], "limit windows round and skip unreadable ones")
+        suite.expect(agents?.windows.map(\.usedPercent) == [72, 100],
+                     "limit windows round, hold to 100, and skip unreadable ones and ones already renewed: \(agents?.windows ?? [])")
+        suite.expect(agents?.windows.first?.provider == "Claude" && agents?.windows.first?.minutes == 300,
+                     "a window keeps its agent and length for the widget to word")
     }
 
     private static func keepAwakeAndMedia(_ suite: TestSuite) {
@@ -115,6 +128,14 @@ enum WidgetSnapshotTests {
         inputs.keepAwakeActive = true
         suite.expect(WidgetSnapshotBuilder.build(inputs, now: now).keepAwake.endsAt == inputs.keepAwakeEnd,
                      "an active session keeps its end time")
+
+        let session = WidgetSnapshot.KeepAwake(isActive: true, endsAt: now.addingTimeInterval(60))
+        suite.expect(session.isOn(at: now), "a session before its end is on")
+        suite.expect(!session.isOn(at: now.addingTimeInterval(60)), "a session is off at its end, even if the app never said so")
+        suite.expect(WidgetSnapshot.KeepAwake(isActive: true, endsAt: nil).isOn(at: now.addingTimeInterval(86_400)),
+                     "a session with no end stays on")
+        suite.expect(!WidgetSnapshot.KeepAwake(isActive: false, endsAt: now.addingTimeInterval(60)).isOn(at: now),
+                     "an inactive session is off whatever end time it has")
 
         inputs.playback = .init(title: "  \n ", artist: "x", isPlaying: true, elapsed: 1, duration: 2, sampledAt: now)
         suite.expect(WidgetSnapshotBuilder.build(inputs, now: now).nowPlaying == nil, "a blank title is no track")
@@ -141,6 +162,16 @@ enum WidgetSnapshotTests {
                      "the same state right after is not written again")
         suite.expect(throttle.shouldWrite(WidgetSnapshotBuilder.build(inputs, now: now), now: now.addingTimeInterval(-3600)),
                      "a clock set backwards does not hold writes back")
+
+        let earlier = now.addingTimeInterval(-3600)
+        inputs.power = .init(hasBattery: true, chargePercent: 80, externalConnected: false)
+        _ = throttle.shouldWrite(WidgetSnapshotBuilder.build(inputs, now: now), now: earlier.addingTimeInterval(1))
+        inputs.power = .init(hasBattery: true, chargePercent: 80, externalConnected: true)
+        suite.expect(throttle.shouldWrite(WidgetSnapshotBuilder.build(inputs, now: now), now: earlier.addingTimeInterval(2)),
+                     "plugging in does not wait for the interval")
+        inputs.power = .init(hasBattery: true, chargePercent: 79, externalConnected: true)
+        suite.expect(!throttle.shouldWrite(WidgetSnapshotBuilder.build(inputs, now: now), now: earlier.addingTimeInterval(3)),
+                     "a point of charge alone does wait for the interval")
     }
 
     private static func store(_ suite: TestSuite) {

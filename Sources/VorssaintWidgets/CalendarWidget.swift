@@ -6,12 +6,24 @@ import WidgetKit
 
 struct CalendarWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "VorssaintCalendar", provider: SnapshotProvider(followsCalendar: true)) { entry in
+        StaticConfiguration(kind: "VorssaintCalendar", provider: SnapshotProvider(moments: Self.moments)) { entry in
             CalendarWidgetView(entry: entry)
         }
         .configurationDisplayName("Calendar")
         .description("The next event, or the whole day.")
         .supportedFamilies([.systemSmall, .systemLarge])
+    }
+}
+
+extension CalendarWidget {
+    /// Each start and end, and midnight, when the day's list turns over.
+    static func moments(_ snapshot: WidgetSnapshot, _ now: Date) -> [Date] {
+        var result = WidgetAgenda.boundaries(snapshot.agenda?.events ?? [], now: now, limit: 12)
+        if let midnight = Calendar.current.nextDate(after: now, matching: DateComponents(hour: 0, minute: 0),
+                                                    matchingPolicy: .nextTime) {
+            result.append(midnight)
+        }
+        return result
     }
 }
 

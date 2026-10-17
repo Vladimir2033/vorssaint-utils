@@ -9,5 +9,8 @@ struct VorssaintWidgetsBundle: WidgetBundle {
     var body: some Widget {
         SystemWidget()
         CalendarWidget()
+        BatteryWidget()
+        KeepAwakeWidget()
+        AgentsWidget()
     }
 }

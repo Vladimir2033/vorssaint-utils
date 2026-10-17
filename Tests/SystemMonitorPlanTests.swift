@@ -85,15 +85,17 @@ enum SystemMonitorPlanTests {
         }
         let quiet = monitor.currentPlan(defaults: defaults)
         suite.expect(!quiet.needCPU && !quiet.needGPUUsage && !quiet.needMemory && !quiet.needNetwork
-                         && !quiet.needDisk && !quiet.needCPUTemperature,
+                         && !quiet.needDisk && !quiet.needCPUTemperature && !quiet.needPower,
                      "nothing is read for the desktop widgets while they are not on")
         monitor.widgetsMonitoring = true
         let desk = monitor.currentPlan(defaults: defaults)
         suite.expect(desk.needCPU && desk.needGPUUsage && desk.needMemory && desk.needNetwork
-                         && desk.needDisk && desk.needCPUTemperature,
-                     "the desktop widgets read CPU, graphics, memory, network, disk and CPU temperature")
-        suite.expect(!desk.needPower && !desk.needFanSpeed && !desk.needConnectedDevices && !desk.needCPUCores,
-                     "the desktop widgets read no power, fans, USB devices or per-core load")
+                         && desk.needDisk && desk.needCPUTemperature && desk.needPower,
+                     "the desktop widgets read CPU, graphics, memory, network, disk, CPU temperature and battery")
+        suite.expect(!desk.needPowerDraw && !desk.needFanSpeed && !desk.needConnectedDevices && !desk.needCPUCores,
+                     "the desktop widgets read no power draw, fans, USB devices or per-core load")
+        suite.expect(!desk.needPeripheralBattery,
+                     "the desktop widgets never start the Bluetooth battery reads on their own")
         defaults.set(false, forKey: AppFeature.monitorMemory.availabilityKey)
         suite.expect(!monitor.currentPlan(defaults: defaults).needMemory,
                      "an uninstalled memory monitor is not read for the desktop widgets either")

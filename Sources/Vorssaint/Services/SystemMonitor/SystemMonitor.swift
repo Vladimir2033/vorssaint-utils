@@ -286,9 +286,12 @@ final class SystemMonitor: ObservableObject {
         }
     }
 
-    /// The desktop widgets read CPU, graphics, memory, network, disk and the
-    /// CPU temperature, on the slow background cadence: no panel is open, so
-    /// nothing here is foreground work.
+    /// The desktop widgets read CPU, graphics, memory, network, disk, the CPU
+    /// temperature and the Mac's battery, on the slow background cadence: no
+    /// panel is open, so nothing here is foreground work. Accessory batteries
+    /// are not asked for: reading them uses Bluetooth, and a widget should not
+    /// be what raises that permission prompt. The widget shows them only while
+    /// another surface already keeps them fresh.
     func setWidgetsMonitoring(_ enabled: Bool) {
         runOnMain { [weak self] in
             guard let self, self.widgetsMonitoring != enabled else { return }
@@ -565,7 +568,7 @@ final class SystemMonitor: ObservableObject {
             || defaults.bool(forKey: DefaultsKey.menuBarDiskUsage)
             || defaults.bool(forKey: DefaultsKey.menuBarDiskActivity)
             || alertDisk
-        plan.needPower = panelNeedsPower || panelBattery
+        plan.needPower = panelNeedsPower || panelBattery || widgetsMonitoring
             || defaults.bool(forKey: DefaultsKey.menuBarPower)
             || (hasInternalBattery && defaults.bool(forKey: DefaultsKey.menuBarBattery))
             || (hasInternalBattery && defaults.bool(forKey: DefaultsKey.menuBarBatteryTime))

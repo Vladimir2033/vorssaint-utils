@@ -9,9 +9,19 @@ import Foundation
 /// without the services that produce them.
 struct WidgetSnapshotInputs {
     struct LimitWindow {
-        var label: String
+        var provider: String
+        var kind: String
+        var minutes: Int?
         var usedPercent: Double
         var resetsAt: Date?
+    }
+
+    struct Peripheral {
+        var name: String
+        var percent: Int
+        /// How long ago the reading was taken; the monitor keeps the last one
+        /// after it stops sampling, so an old value must not pass as current.
+        var secondsSinceRead: TimeInterval
     }
 
     struct Playback {
@@ -65,7 +75,7 @@ struct WidgetSnapshotInputs {
 
     // Power; nil when the Mac reported nothing (a desktop with no SMC power keys)
     var power: Power?
-    var peripherals: [(name: String, percent: Int)] = []
+    var peripherals: [Peripheral] = []
 
     var keepAwakeActive = false
     var keepAwakeEnd: Date?
@@ -97,6 +107,8 @@ enum WidgetSnapshotBuilder {
     static let maxEventTitleCharacters = 80
     static let maxEventLocationCharacters = 60
     static let maxPeripherals = 3
+    /// Older than this, a battery reading is left out rather than shown.
+    static let maxPeripheralAge: TimeInterval = 10 * 60
     static let maxAgentWindows = 3
     static let maxClipboardItems = 3
     static let maxPreviewCharacters = 60
@@ -111,7 +123,7 @@ enum WidgetSnapshotBuilder {
             keepAwake: WidgetSnapshot.KeepAwake(
                 isActive: inputs.keepAwakeActive,
                 endsAt: inputs.keepAwakeActive ? inputs.keepAwakeEnd : nil),
-            agents: agents(inputs),
+            agents: agents(inputs, now: now),
             agenda: agenda(inputs, now: now, calendar: calendar),
             nowPlaying: nowPlaying(inputs.playback),
             clipboard: inputs.showsClipboard ? clipboard(inputs.clipboard) : [])
@@ -138,11 +150,13 @@ enum WidgetSnapshotBuilder {
     }
 
     private static func power(_ inputs: WidgetSnapshotInputs) -> WidgetSnapshot.Power? {
+        // Lowest first: the device about to die is the one worth a glance.
         let peripherals = Array(inputs.peripherals.compactMap { device -> WidgetSnapshot.Peripheral? in
             let name = device.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !name.isEmpty else { return nil }
+            guard !name.isEmpty, device.secondsSinceRead.isFinite,
+                  device.secondsSinceRead <= maxPeripheralAge else { return nil }
             return WidgetSnapshot.Peripheral(name: name, percent: min(100, max(0, device.percent)))
-        }.prefix(maxPeripherals))
+        }.sorted { ($0.percent, $0.name) < ($1.percent, $1.name) }.prefix(maxPeripherals))
         let reading = inputs.power
         guard reading != nil || !peripherals.isEmpty else { return nil }
         return WidgetSnapshot.Power(
@@ -154,14 +168,18 @@ enum WidgetSnapshotBuilder {
             peripherals: peripherals)
     }
 
-    private static func agents(_ inputs: WidgetSnapshotInputs) -> WidgetSnapshot.Agents? {
+    private static func agents(_ inputs: WidgetSnapshotInputs, now: Date) -> WidgetSnapshot.Agents? {
         guard inputs.agentsLoaded else { return nil }
-        let windows = inputs.agentWindows.prefix(maxAgentWindows).compactMap { window -> WidgetSnapshot.LimitWindow? in
+        // A window whose renewal has passed says nothing about the new one, so
+        // it is left out rather than shown as spent.
+        let windows = inputs.agentWindows.compactMap { window -> WidgetSnapshot.LimitWindow? in
             guard let used = rounded(window.usedPercent) else { return nil }
-            return WidgetSnapshot.LimitWindow(label: window.label, usedPercent: min(100, max(0, used)),
+            if let renewal = window.resetsAt, renewal <= now { return nil }
+            return WidgetSnapshot.LimitWindow(provider: window.provider, kind: window.kind,
+                                              minutes: window.minutes, usedPercent: min(100, max(0, used)),
                                               resetsAt: window.resetsAt)
-        }
-        return WidgetSnapshot.Agents(windows: windows,
+        }.prefix(maxAgentWindows)
+        return WidgetSnapshot.Agents(windows: Array(windows),
                                      todayTokens: inputs.agentTodayTokens.map { max(0, $0) },
                                      liveSessions: max(0, inputs.agentLiveSessions))
     }
