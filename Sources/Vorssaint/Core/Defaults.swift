@@ -857,6 +857,12 @@ enum DefaultsKey {
     static let desktopWidgetSystemCompact = "desktopWidgetSystemCompact"
     static let desktopWidgetAgenda = "desktopWidgetAgenda"
     static let desktopWidgetNextEvent = "desktopWidgetNextEvent"
+    static let desktopWidgetSystemDetailed = "desktopWidgetSystemDetailed"
+    static let desktopWidgetCalendarMonth = "desktopWidgetCalendarMonth"
+    static let desktopWidgetWorldClock = "desktopWidgetWorldClock"
+    static let desktopWidgetAccessories = "desktopWidgetAccessories"
+    /// [TimeZone.identifier] the world clock shows, in order.
+    static let desktopWidgetClocks = "desktopWidgetClocks"
     /// [DesktopWidgetKind.rawValue: "x,y"], where each card was left. Screen
     /// coordinates of this Mac, so deliberately not registered and not exported.
     static let desktopWidgetOrigins = "desktopWidgetOrigins"
@@ -1448,6 +1454,11 @@ enum Defaults {
         DefaultsKey.desktopWidgetSystemCompact: false,
         DefaultsKey.desktopWidgetAgenda: false,
         DefaultsKey.desktopWidgetNextEvent: false,
+        DefaultsKey.desktopWidgetSystemDetailed: false,
+        DefaultsKey.desktopWidgetCalendarMonth: false,
+        DefaultsKey.desktopWidgetWorldClock: false,
+        DefaultsKey.desktopWidgetAccessories: false,
+        DefaultsKey.desktopWidgetClocks: ["America/New_York", "Europe/London", "Asia/Tokyo"],
         DefaultsKey.notchAgentsEnabled: false,
         DefaultsKey.notchAgentsClaude: true,
         DefaultsKey.notchAgentsCodex: true,

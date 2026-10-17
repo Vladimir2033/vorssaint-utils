@@ -27,6 +27,7 @@ struct MetricsTests {
                 WidgetAgendaTests.run(suite)
                 DesktopWidgetPlacementTests.run(suite)
                 DesktopWidgetsStringsTests.run(suite)
+                DesktopWorldClockTests.run(suite)
             }),
             ("clipboard", {
                 ClipboardFeatureTests.run(suite)

@@ -37,6 +37,19 @@ struct DesktopWidgetsFeatureStrings {
     let moreFormat: String
     let allDay: String
     let busy: String
+    let systemDetailed: String
+    let monthCalendar: String
+    let today: String
+    let noEventsOnDay: String
+    let worldClock: String
+    let cities: String
+    let addCity: String
+    let searchCity: String
+    let tomorrowLabel: String
+    let yesterdayLabel: String
+    let accessories: String
+    let noAccessories: String
+    let accessoriesCaption: String
 }
 
 extension FeatureStrings {
@@ -94,7 +107,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Tomorrow: %d",
         moreFormat: "+%d more",
         allDay: "All day",
-        busy: "Busy"
+        busy: "Busy",
+        systemDetailed: "System (detailed)",
+        monthCalendar: "Month calendar",
+        today: "Today",
+        noEventsOnDay: "No events on this day",
+        worldClock: "World clock",
+        cities: "Cities",
+        addCity: "Add a city",
+        searchCity: "Search for a city",
+        tomorrowLabel: "Tomorrow",
+        yesterdayLabel: "Yesterday",
+        accessories: "Accessories",
+        noAccessories: "No accessories found",
+        accessoriesCaption: "Apple keyboards, trackpads and mice are read directly. Other accessories use Bluetooth, and macOS may ask once."
     )
 
     static let ptBR = DesktopWidgetsFeatureStrings(
@@ -129,7 +155,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Amanhã: %d",
         moreFormat: "+%d",
         allDay: "Dia todo",
-        busy: "Ocupado"
+        busy: "Ocupado",
+        systemDetailed: "Sistema (detalhado)",
+        monthCalendar: "Calendário do mês",
+        today: "Hoje",
+        noEventsOnDay: "Sem eventos neste dia",
+        worldClock: "Relógio mundial",
+        cities: "Cidades",
+        addCity: "Adicionar cidade",
+        searchCity: "Buscar uma cidade",
+        tomorrowLabel: "Amanhã",
+        yesterdayLabel: "Ontem",
+        accessories: "Acessórios",
+        noAccessories: "Nenhum acessório encontrado",
+        accessoriesCaption: "Teclados, trackpads e mouses da Apple são lidos direto. Outros acessórios usam Bluetooth, e o macOS pode pedir permissão uma vez."
     )
 
     static let tr = DesktopWidgetsFeatureStrings(
@@ -164,7 +203,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Yarın: %d",
         moreFormat: "+%d daha",
         allDay: "Tüm gün",
-        busy: "Meşgul"
+        busy: "Meşgul",
+        systemDetailed: "Sistem (ayrıntılı)",
+        monthCalendar: "Aylık takvim",
+        today: "Bugün",
+        noEventsOnDay: "Bu gün etkinlik yok",
+        worldClock: "Dünya saati",
+        cities: "Şehirler",
+        addCity: "Şehir ekle",
+        searchCity: "Şehir ara",
+        tomorrowLabel: "Yarın",
+        yesterdayLabel: "Dün",
+        accessories: "Aksesuarlar",
+        noAccessories: "Aksesuar bulunamadı",
+        accessoriesCaption: "Apple klavye, izleme dörtgeni ve fareleri doğrudan okunur. Diğer aksesuarlar Bluetooth kullanır ve macOS bir kez izin isteyebilir."
     )
 
     static let ru = DesktopWidgetsFeatureStrings(
@@ -199,7 +251,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Завтра: %d",
         moreFormat: "ещё %d",
         allDay: "Весь день",
-        busy: "Занят"
+        busy: "Занят",
+        systemDetailed: "Система (подробно)",
+        monthCalendar: "Календарь на месяц",
+        today: "Сегодня",
+        noEventsOnDay: "В этот день событий нет",
+        worldClock: "Мировое время",
+        cities: "Города",
+        addCity: "Добавить город",
+        searchCity: "Найти город",
+        tomorrowLabel: "Завтра",
+        yesterdayLabel: "Вчера",
+        accessories: "Аксессуары",
+        noAccessories: "Аксессуары не найдены",
+        accessoriesCaption: "Клавиатуры, трекпады и мыши Apple читаются напрямую. Другие аксессуары используют Bluetooth, и macOS может один раз запросить разрешение."
     )
 
     static let es = DesktopWidgetsFeatureStrings(
@@ -234,7 +299,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Mañana: %d",
         moreFormat: "+%d más",
         allDay: "Todo el día",
-        busy: "Ocupado"
+        busy: "Ocupado",
+        systemDetailed: "Sistema (detallado)",
+        monthCalendar: "Calendario del mes",
+        today: "Hoy",
+        noEventsOnDay: "Sin eventos este día",
+        worldClock: "Reloj mundial",
+        cities: "Ciudades",
+        addCity: "Añadir ciudad",
+        searchCity: "Buscar una ciudad",
+        tomorrowLabel: "Mañana",
+        yesterdayLabel: "Ayer",
+        accessories: "Accesorios",
+        noAccessories: "No se encontraron accesorios",
+        accessoriesCaption: "Los teclados, trackpads y ratones de Apple se leen directamente. Otros accesorios usan Bluetooth y macOS puede pedir permiso una vez."
     )
 
     static let sk = DesktopWidgetsFeatureStrings(
@@ -269,7 +347,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Zajtra: %d",
         moreFormat: "+%d ďalších",
         allDay: "Celý deň",
-        busy: "Obsadené"
+        busy: "Obsadené",
+        systemDetailed: "Systém (podrobne)",
+        monthCalendar: "Mesačný kalendár",
+        today: "Dnes",
+        noEventsOnDay: "V tento deň žiadne udalosti",
+        worldClock: "Svetový čas",
+        cities: "Mestá",
+        addCity: "Pridať mesto",
+        searchCity: "Hľadať mesto",
+        tomorrowLabel: "Zajtra",
+        yesterdayLabel: "Včera",
+        accessories: "Príslušenstvo",
+        noAccessories: "Nenašlo sa žiadne príslušenstvo",
+        accessoriesCaption: "Klávesnice, trackpady a myši Apple sa čítajú priamo. Iné príslušenstvo používa Bluetooth a macOS môže raz požiadať o povolenie."
     )
 
     static let de = DesktopWidgetsFeatureStrings(
@@ -304,7 +395,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Morgen: %d",
         moreFormat: "+%d weitere",
         allDay: "Ganztägig",
-        busy: "Beschäftigt"
+        busy: "Beschäftigt",
+        systemDetailed: "System (ausführlich)",
+        monthCalendar: "Monatskalender",
+        today: "Heute",
+        noEventsOnDay: "Keine Termine an diesem Tag",
+        worldClock: "Weltuhr",
+        cities: "Städte",
+        addCity: "Stadt hinzufügen",
+        searchCity: "Stadt suchen",
+        tomorrowLabel: "Morgen",
+        yesterdayLabel: "Gestern",
+        accessories: "Zubehör",
+        noAccessories: "Kein Zubehör gefunden",
+        accessoriesCaption: "Tastaturen, Trackpads und Mäuse von Apple werden direkt gelesen. Anderes Zubehör nutzt Bluetooth, und macOS fragt eventuell einmal nach."
     )
 
     static let fr = DesktopWidgetsFeatureStrings(
@@ -339,7 +443,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Demain\u{00A0}: %d",
         moreFormat: "+%d de plus",
         allDay: "Toute la journée",
-        busy: "Occupé"
+        busy: "Occupé",
+        systemDetailed: "Système (détaillé)",
+        monthCalendar: "Calendrier du mois",
+        today: "Aujourd’hui",
+        noEventsOnDay: "Aucun événement ce jour-là",
+        worldClock: "Horloge mondiale",
+        cities: "Villes",
+        addCity: "Ajouter une ville",
+        searchCity: "Rechercher une ville",
+        tomorrowLabel: "Demain",
+        yesterdayLabel: "Hier",
+        accessories: "Accessoires",
+        noAccessories: "Aucun accessoire trouvé",
+        accessoriesCaption: "Les claviers, trackpads et souris Apple sont lus directement. Les autres accessoires utilisent le Bluetooth, et macOS peut demander une autorisation une fois."
     )
 
     static let it = DesktopWidgetsFeatureStrings(
@@ -374,7 +491,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Domani: %d",
         moreFormat: "+%d altri",
         allDay: "Tutto il giorno",
-        busy: "Occupato"
+        busy: "Occupato",
+        systemDetailed: "Sistema (dettagliato)",
+        monthCalendar: "Calendario del mese",
+        today: "Oggi",
+        noEventsOnDay: "Nessun evento in questo giorno",
+        worldClock: "Orologio mondiale",
+        cities: "Città",
+        addCity: "Aggiungi città",
+        searchCity: "Cerca una città",
+        tomorrowLabel: "Domani",
+        yesterdayLabel: "Ieri",
+        accessories: "Accessori",
+        noAccessories: "Nessun accessorio trovato",
+        accessoriesCaption: "Tastiere, trackpad e mouse Apple vengono letti direttamente. Gli altri accessori usano il Bluetooth e macOS potrebbe chiedere il permesso una volta."
     )
 
     static let ja = DesktopWidgetsFeatureStrings(
@@ -409,7 +539,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "明日：%d 件",
         moreFormat: "他 %d 件",
         allDay: "終日",
-        busy: "予定あり"
+        busy: "予定あり",
+        systemDetailed: "システム（詳細）",
+        monthCalendar: "月間カレンダー",
+        today: "今日",
+        noEventsOnDay: "この日の予定はありません",
+        worldClock: "世界時計",
+        cities: "都市",
+        addCity: "都市を追加",
+        searchCity: "都市を検索",
+        tomorrowLabel: "明日",
+        yesterdayLabel: "昨日",
+        accessories: "アクセサリ",
+        noAccessories: "アクセサリが見つかりません",
+        accessoriesCaption: "Apple のキーボード、トラックパッド、マウスは直接読み取ります。その他のアクセサリは Bluetooth を使うため、macOS が一度だけ許可を求めることがあります。"
     )
 
     static let ko = DesktopWidgetsFeatureStrings(
@@ -444,7 +587,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "내일: %d개",
         moreFormat: "외 %d개",
         allDay: "종일",
-        busy: "바쁨"
+        busy: "바쁨",
+        systemDetailed: "시스템(자세히)",
+        monthCalendar: "월간 캘린더",
+        today: "오늘",
+        noEventsOnDay: "이 날에는 일정이 없음",
+        worldClock: "세계 시계",
+        cities: "도시",
+        addCity: "도시 추가",
+        searchCity: "도시 검색",
+        tomorrowLabel: "내일",
+        yesterdayLabel: "어제",
+        accessories: "액세서리",
+        noAccessories: "액세서리를 찾을 수 없음",
+        accessoriesCaption: "Apple 키보드, 트랙패드, 마우스는 직접 읽습니다. 다른 액세서리는 Bluetooth를 사용하며 macOS가 한 번 권한을 요청할 수 있습니다."
     )
 
     static let zhHans = DesktopWidgetsFeatureStrings(
@@ -479,7 +635,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "明天：%d 项",
         moreFormat: "另有 %d 项",
         allDay: "全天",
-        busy: "忙碌"
+        busy: "忙碌",
+        systemDetailed: "系统（详细）",
+        monthCalendar: "月历",
+        today: "今天",
+        noEventsOnDay: "这一天没有日程",
+        worldClock: "世界时钟",
+        cities: "城市",
+        addCity: "添加城市",
+        searchCity: "搜索城市",
+        tomorrowLabel: "明天",
+        yesterdayLabel: "昨天",
+        accessories: "配件",
+        noAccessories: "未找到配件",
+        accessoriesCaption: "Apple 键盘、触控板和鼠标直接读取。其他配件使用蓝牙，macOS 可能会请求一次权限。"
     )
 
     static let zhTW = DesktopWidgetsFeatureStrings(
@@ -514,7 +683,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "明天：%d 項",
         moreFormat: "另有 %d 項",
         allDay: "全天",
-        busy: "忙碌"
+        busy: "忙碌",
+        systemDetailed: "系統（詳細）",
+        monthCalendar: "月曆",
+        today: "今天",
+        noEventsOnDay: "這一天沒有行程",
+        worldClock: "世界時鐘",
+        cities: "城市",
+        addCity: "加入城市",
+        searchCity: "搜尋城市",
+        tomorrowLabel: "明天",
+        yesterdayLabel: "昨天",
+        accessories: "配件",
+        noAccessories: "找不到配件",
+        accessoriesCaption: "Apple 鍵盤、觸控板和滑鼠直接讀取。其他配件使用藍牙，macOS 可能會要求一次權限。"
     )
 
     static let zhHK = DesktopWidgetsFeatureStrings(
@@ -549,7 +731,20 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "明天：%d 項",
         moreFormat: "另有 %d 項",
         allDay: "全天",
-        busy: "忙碌"
+        busy: "忙碌",
+        systemDetailed: "系統（詳細）",
+        monthCalendar: "月曆",
+        today: "今天",
+        noEventsOnDay: "這一天沒有行程",
+        worldClock: "世界時鐘",
+        cities: "城市",
+        addCity: "加入城市",
+        searchCity: "搜尋城市",
+        tomorrowLabel: "明天",
+        yesterdayLabel: "昨天",
+        accessories: "配件",
+        noAccessories: "找不到配件",
+        accessoriesCaption: "Apple 鍵盤、觸控板和滑鼠直接讀取。其他配件使用藍牙，macOS 可能會要求一次權限。"
     )
 
     static let uk = DesktopWidgetsFeatureStrings(
@@ -584,6 +779,19 @@ extension DesktopWidgetsFeatureStrings {
         tomorrowCountFormat: "Завтра: %d",
         moreFormat: "ще %d",
         allDay: "Увесь день",
-        busy: "Зайнято"
+        busy: "Зайнято",
+        systemDetailed: "Система (докладно)",
+        monthCalendar: "Календар на місяць",
+        today: "Сьогодні",
+        noEventsOnDay: "Цього дня подій немає",
+        worldClock: "Світовий час",
+        cities: "Міста",
+        addCity: "Додати місто",
+        searchCity: "Знайти місто",
+        tomorrowLabel: "Завтра",
+        yesterdayLabel: "Учора",
+        accessories: "Аксесуари",
+        noAccessories: "Аксесуарів не знайдено",
+        accessoriesCaption: "Клавіатури, трекпади й миші Apple читаються напряму. Інші аксесуари використовують Bluetooth, і macOS може один раз попросити дозвіл."
     )
 }

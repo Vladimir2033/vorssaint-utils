@@ -144,10 +144,18 @@ final class SystemMonitor: ObservableObject {
     private var notchVisible = false
     private var notchDetailNeeds: SystemMonitorPanelNeeds = .none
     private var notchAccessoryMonitoring = false
-    /// Who wants the readings the widgets show: the desktop cards, the macOS
-    /// widget extension. Each turns itself on and off without the other's say.
+    /// Who wants the readings the widgets show, by name: "desktop" (the
+    /// desktop System cards, which draw live lines and so sample at the
+    /// panel's pace), "extension" (the macOS widget, a glance a minute) and
+    /// "accessories" (the desktop card of accessory batteries, the only one
+    /// that starts the Bluetooth battery reads). Each turns itself on and off
+    /// without the others' say.
     private var widgetConsumers = Set<String>()
-    private var widgetsMonitoring: Bool { !widgetConsumers.isEmpty }
+    private var widgetsMonitoring: Bool {
+        widgetConsumers.contains("desktop") || widgetConsumers.contains("extension")
+    }
+    private var widgetsAccessories: Bool { widgetConsumers.contains("accessories") }
+    private var widgetsForeground: Bool { widgetConsumers.contains("desktop") }
     private var menuBarActive = false
     private var alertsActive = false
     private var refreshInFlight = false
@@ -289,21 +297,22 @@ final class SystemMonitor: ObservableObject {
         }
     }
 
-    /// The desktop widgets read CPU, graphics, memory, network, disk, the CPU
-    /// temperature and the Mac's battery, on the slow background cadence: no
-    /// panel is open, so nothing here is foreground work. Accessory batteries
-    /// are not asked for: reading them uses Bluetooth, and a widget should not
-    /// be what raises that permission prompt. The widget shows them only while
-    /// another surface already keeps them fresh.
+    /// The widgets read CPU, graphics, memory, network, disk, the CPU
+    /// temperature and the Mac's battery. The desktop System cards draw live
+    /// lines, so while one is on the monitor samples at the panel's pace; the
+    /// macOS widget extension keeps the slow background cadence. Accessory
+    /// batteries are read over Bluetooth, which has its own permission
+    /// prompt, so only the accessories card (consumer "accessories"), turned
+    /// on by the person, asks for them.
     func setWidgetsMonitoring(_ enabled: Bool, consumer: String) {
         runOnMain { [weak self] in
             guard let self else { return }
-            let before = self.widgetsMonitoring
+            let before = self.widgetConsumers
             if enabled { self.widgetConsumers.insert(consumer) } else { self.widgetConsumers.remove(consumer) }
-            guard self.widgetsMonitoring != before else { return }
+            guard self.widgetConsumers != before else { return }
             self.stopTimerIfIdle()
             self.ensureTimer()
-            if self.widgetsMonitoring { self.refresh(suppressImmediateGPU: true) }
+            if !self.widgetConsumers.isEmpty { self.refresh(suppressImmediateGPU: true) }
         }
     }
 
@@ -486,7 +495,7 @@ final class SystemMonitor: ObservableObject {
     /// independent surfaces cannot desync.
     private var fullMonitorVisible: Bool { panelClients > 0 }
 
-    private var shouldRun: Bool { fullMonitorVisible || menuPanelNeeds.any || notchDetailNeeds.any || notchVisible || notchAccessoryMonitoring || widgetsMonitoring || menuBarActive || alertsActive }
+    private var shouldRun: Bool { fullMonitorVisible || menuPanelNeeds.any || notchDetailNeeds.any || notchVisible || notchAccessoryMonitoring || widgetsMonitoring || widgetsAccessories || menuBarActive || alertsActive }
 
     private func shouldSample(defaults: UserDefaults = .standard) -> Bool {
         shouldRun && currentPlan(defaults: defaults).any
@@ -579,7 +588,7 @@ final class SystemMonitor: ObservableObject {
             || (hasInternalBattery && defaults.bool(forKey: DefaultsKey.menuBarBatteryTime))
             || alertBattery
         plan.needPowerDraw = defaults.bool(forKey: DefaultsKey.menuBarPower)
-        plan.needPeripheralBattery = menuPanelNeeds.peripheralBattery || notchAccessoryMonitoring
+        plan.needPeripheralBattery = menuPanelNeeds.peripheralBattery || notchAccessoryMonitoring || widgetsAccessories
             || defaults.bool(forKey: DefaultsKey.menuBarPeripheralBattery)
         plan.needGPUUsage = panelGPU || defaults.bool(forKey: DefaultsKey.menuBarGPU) || widgetsMonitoring
         plan.needCPUTemperature = panelTemps || menuPanelNeeds.cpuTemperature ||
@@ -656,6 +665,7 @@ final class SystemMonitor: ObservableObject {
     private func syncTimerCadence(plan: SamplingPlan) {
         lastSyncedPlan = plan
         let foreground = fullMonitorVisible || menuPanelNeeds.any || notchDetailNeeds.any || notchVisible
+            || widgetsForeground
         let desired = MonitorSamplingPolicy.wakeTicks(for: Self.neededKinds(of: plan),
                                                       intervalSeconds: intervalSeconds,
                                                       foreground: foreground)
@@ -721,6 +731,7 @@ final class SystemMonitor: ObservableObject {
         refreshInFlight = true
         let suppressGPUReadsUntil = self.suppressGPUReadsUntil
         let foregroundSampling = fullMonitorVisible || menuPanelNeeds.any || notchDetailNeeds.any || notchVisible
+            || widgetsForeground
         let intervalSeconds = self.intervalSeconds
         // Ticks advance by the timer's cadence so `tick % stride` keeps
         // measuring base intervals; mutated on main only, read by the queue

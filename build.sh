@@ -354,6 +354,7 @@ if (( TEST )); then
         Sources/Vorssaint/Services/Widgets/WidgetSnapshotThrottle.swift
         Sources/Vorssaint/Services/Widgets/WidgetAgenda.swift
         Sources/Vorssaint/Services/Widgets/DesktopWidgetPlacement.swift
+        Sources/Vorssaint/Services/Widgets/DesktopWorldClock.swift
         Sources/Vorssaint/Core/DesktopWidgetsStrings.swift
         Sources/Vorssaint/Services/AgentUsage/AgentUsageModels.swift
         Sources/Vorssaint/Services/AgentUsage/AgentPricing.swift

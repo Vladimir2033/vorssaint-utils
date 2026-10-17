@@ -34,6 +34,7 @@ enum WidgetAgendaTests {
         focus(suite)
         moments(suite)
         week(suite)
+        monthGrid(suite)
         shared(suite)
     }
 
@@ -111,6 +112,34 @@ enum WidgetAgendaTests {
         suite.expect(mondayFirst.count == 7 && monday.component(.day, from: mondayFirst[0]) == 12
                          && monday.component(.day, from: mondayFirst[6]) == 18,
                      "a Monday-first week holding the same day runs 12 to 18")
+    }
+
+    private static func monthGrid(_ suite: TestSuite) {
+        let grid = WidgetAgenda.monthGrid(containing: now, calendar: calendar)
+        suite.expect(grid.count == 42, "a month grid is always six weeks")
+        // October 2026 starts on a Thursday; a Sunday-first grid opens on 27 September.
+        suite.expect(calendar.component(.day, from: grid[0]) == 27 && calendar.component(.month, from: grid[0]) == 9,
+                     "the grid opens on the first weekday on or before the 1st")
+        suite.expect(calendar.component(.day, from: grid[4]) == 1, "the 1st falls in its weekday column")
+        suite.expect(calendar.component(.weekday, from: grid[0]) == calendar.firstWeekday,
+                     "the first column is the calendar's first weekday")
+        var monday = calendar
+        monday.firstWeekday = 2
+        let mondayGrid = WidgetAgenda.monthGrid(containing: now, calendar: monday)
+        suite.expect(monday.component(.day, from: mondayGrid[0]) == 28 && monday.component(.day, from: mondayGrid[3]) == 1,
+                     "a Monday-first grid opens on Monday 28 September")
+        let february = calendar.date(from: DateComponents(year: 2026, month: 2, day: 10))!
+        suite.expect(WidgetAgenda.monthGrid(containing: february, calendar: calendar).count == 42,
+                     "a short month keeps the six-week shape")
+
+        let next = WidgetAgenda.month(now, offset: 1, calendar: calendar)
+        let previous = WidgetAgenda.month(now, offset: -10, calendar: calendar)
+        suite.expect(calendar.component(.month, from: next) == 11 && calendar.component(.day, from: next) == 1,
+                     "the next month starts on its 1st")
+        suite.expect(calendar.component(.year, from: previous) == 2025 && calendar.component(.month, from: previous) == 12,
+                     "going back across a year lands in the right month")
+        let interval = WidgetAgenda.gridInterval(containing: now, calendar: calendar)
+        suite.expect(interval.map { $0.duration == 42 * 86_400 } == true, "the grid's span covers its 42 days")
     }
 
     private static func shared(_ suite: TestSuite) {

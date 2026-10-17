@@ -14,6 +14,7 @@ enum SystemMonitorPlanTests {
         var notchVisible = false
         var notchAccessoryMonitoring = false
         var widgetsMonitoring = false
+        var widgetsAccessories = false
         static var fanTelemetryAvailable: Bool { true }
     }
 
@@ -99,5 +100,16 @@ enum SystemMonitorPlanTests {
         defaults.set(false, forKey: AppFeature.monitorMemory.availabilityKey)
         suite.expect(!monitor.currentPlan(defaults: defaults).needMemory,
                      "an uninstalled memory monitor is not read for the desktop widgets either")
+
+        // The accessories card alone asks for the Bluetooth battery reads.
+        monitor.widgetsMonitoring = false
+        defaults.set(true, forKey: AppFeature.monitorPower.availabilityKey)
+        monitor.widgetsAccessories = true
+        let accessories = monitor.currentPlan(defaults: defaults)
+        suite.expect(accessories.needPeripheralBattery && !accessories.needCPU && !accessories.needGPUUsage,
+                     "the accessories card reads accessory batteries and nothing the System cards read")
+        defaults.set(false, forKey: AppFeature.monitorPower.availabilityKey)
+        suite.expect(!monitor.currentPlan(defaults: defaults).needPeripheralBattery,
+                     "an uninstalled power monitor is not read for the accessories card either")
     }
 }

@@ -43,6 +43,12 @@ struct WidgetSnapshot: Codable, Equatable {
         var netDownBytesPerSec: Double?
         var netUpBytesPerSec: Double?
         var diskFreeBytes: UInt64?
+        var diskTotalBytes: UInt64?
+        /// Same spacing and length as `cpuHistory`.
+        var memoryHistory: [Int] = []
+        var gpuHistory: [Int] = []
+        var netDownHistory: [Double] = []
+        var netUpHistory: [Double] = []
     }
 
     struct Power: Codable, Equatable {
@@ -57,6 +63,8 @@ struct WidgetSnapshot: Codable, Equatable {
     struct Peripheral: Codable, Equatable {
         var name: String
         var percent: Int
+        /// "keyboard", "mouse", "trackpad", "audio" or "device", for the icon.
+        var kind: String = "device"
     }
 
     struct KeepAwake: Codable, Equatable {

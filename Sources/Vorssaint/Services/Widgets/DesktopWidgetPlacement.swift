@@ -7,25 +7,35 @@ import Foundation
 /// The cards Vorssaint can draw on the desktop. The raw value keys the saved
 /// position, so a case is never renamed.
 enum DesktopWidgetKind: String, CaseIterable {
-    case system, systemCompact, agenda, nextEvent
+    case system, systemCompact, systemDetailed, agenda, nextEvent, calendarMonth, worldClock, accessories
 
     /// The switch that turns the card on.
     var defaultsKey: String {
         switch self {
         case .system: return DefaultsKey.desktopWidgetSystem
         case .systemCompact: return DefaultsKey.desktopWidgetSystemCompact
+        case .systemDetailed: return DefaultsKey.desktopWidgetSystemDetailed
         case .agenda: return DefaultsKey.desktopWidgetAgenda
         case .nextEvent: return DefaultsKey.desktopWidgetNextEvent
+        case .calendarMonth: return DefaultsKey.desktopWidgetCalendarMonth
+        case .worldClock: return DefaultsKey.desktopWidgetWorldClock
+        case .accessories: return DefaultsKey.desktopWidgetAccessories
         }
     }
+
+    /// Cards drawing the system readings; while one is on, the monitor
+    /// samples at the panel's pace.
+    var readsSystem: Bool { self == .system || self == .systemCompact || self == .systemDetailed }
+    var readsCalendar: Bool { self == .agenda || self == .nextEvent || self == .calendarMonth }
 
     /// The size the card is designed at, in points: the small, medium and
     /// large cells macOS's own widgets use, so the cards sit well beside them.
     var size: CGSize {
         switch self {
-        case .system: return CGSize(width: 364, height: 170)
-        case .systemCompact, .nextEvent: return CGSize(width: 170, height: 170)
-        case .agenda: return CGSize(width: 364, height: 382)
+        case .system, .worldClock: return CGSize(width: 364, height: 170)
+        case .systemCompact, .nextEvent, .accessories: return CGSize(width: 170, height: 170)
+        case .systemDetailed, .agenda: return CGSize(width: 364, height: 382)
+        case .calendarMonth: return CGSize(width: 364, height: 470)
         }
     }
 }

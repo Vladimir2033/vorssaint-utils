@@ -66,6 +66,37 @@ enum WidgetAgenda {
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: week.start) }
     }
 
+    /// The first moment of the month holding `date`.
+    static func startOfMonth(_ date: Date, calendar: Calendar) -> Date {
+        calendar.dateInterval(of: .month, for: date)?.start ?? calendar.startOfDay(for: date)
+    }
+
+    /// The month `offset` months away from the one holding `date`.
+    static func month(_ date: Date, offset: Int, calendar: Calendar) -> Date {
+        let start = startOfMonth(date, calendar: calendar)
+        return calendar.date(byAdding: .month, value: offset, to: start) ?? start
+    }
+
+    /// The 42 days a month grid shows: six whole weeks, starting on the
+    /// calendar's first weekday on or before the 1st, so every month (even a
+    /// February starting on a Monday) has the same shape and the grid never
+    /// changes height while navigating.
+    static func monthGrid(containing date: Date, calendar: Calendar) -> [Date] {
+        let first = startOfMonth(date, calendar: calendar)
+        let weekday = calendar.component(.weekday, from: first)
+        let lead = (weekday - calendar.firstWeekday + 7) % 7
+        guard let gridStart = calendar.date(byAdding: .day, value: -lead, to: first) else { return [] }
+        return (0..<42).compactMap { calendar.date(byAdding: .day, value: $0, to: gridStart) }
+    }
+
+    /// The span a month grid covers, for reading its events in one go.
+    static func gridInterval(containing date: Date, calendar: Calendar) -> DateInterval? {
+        let days = monthGrid(containing: date, calendar: calendar)
+        guard let first = days.first, let last = days.last,
+              let end = calendar.date(byAdding: .day, value: 1, to: last) else { return nil }
+        return DateInterval(start: first, end: end)
+    }
+
     /// Whether `event` is over at `now`, for dimming it in the day list.
     static func isPast(_ event: Event, now: Date) -> Bool {
         !event.allDay && event.end <= now

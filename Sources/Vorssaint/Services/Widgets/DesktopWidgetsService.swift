@@ -10,6 +10,12 @@ import SwiftUI
 /// managers leave it alone, like the Shelf.
 final class DesktopWidgetPanel: OverlayPanel {}
 
+/// The card is never the key window, so without this the first click on the
+/// month arrows or a day would only bring the card forward, not press it.
+private final class DesktopWidgetHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
 /// Draws the cards the person turned on, directly on the desktop: behind every
 /// window, above the wallpaper and the desktop icons, on every Space. They are
 /// the app's own windows, not macOS widgets, so they need no extension, no
@@ -23,6 +29,8 @@ final class DesktopWidgetsService {
     static let shared = DesktopWidgetsService()
 
     let model = DesktopWidgetsModel()
+    let month = DesktopMonthModel()
+    private var monthTask: Task<Void, Never>?
     private let collector = WidgetSnapshotCollector()
     private var panels: [DesktopWidgetKind: DesktopWidgetPanel] = [:]
     private var moveTokens: [DesktopWidgetKind: NSObjectProtocol] = [:]
@@ -34,11 +42,12 @@ final class DesktopWidgetsService {
     private var collecting = false
     private var calendarDirty = true
 
-    /// How often the cards redraw. The readings themselves come at the
-    /// monitor's slower background pace; this keeps "now" and "past" current.
-    private static let tick: TimeInterval = 5
-    /// One CPU point and one calendar read per this many ticks (a minute).
-    private static let slowEvery = 12
+    /// How often the cards redraw and add a point to their lines. While a
+    /// System card is on, the monitor samples at the panel's pace to match.
+    private static let tick: TimeInterval = 3
+    /// One calendar read per this many ticks (a minute), besides the changes
+    /// the calendar announces.
+    private static let slowEvery = 20
 
     private init() {}
 
@@ -62,6 +71,12 @@ final class DesktopWidgetsService {
             }
         }
         startUpdating()
+        // Only what the cards on the desk need: live system readings for the
+        // System cards, Bluetooth battery reads for the accessories card.
+        let monitor = SystemMonitor.shared
+        monitor.setWidgetsMonitoring(enabled.contains { $0.readsSystem }, consumer: "desktop")
+        monitor.setWidgetsMonitoring(enabled.contains(.accessories), consumer: "accessories")
+        if enabled.contains(.calendarMonth) { loadMonth() }
     }
 
     func stop() {
@@ -72,6 +87,9 @@ final class DesktopWidgetsService {
         permissionSubscription = nil
         for kind in Array(panels.keys) { close(kind) }
         SystemMonitor.shared.setWidgetsMonitoring(false, consumer: "desktop")
+        SystemMonitor.shared.setWidgetsMonitoring(false, consumer: "accessories")
+        monthTask?.cancel()
+        monthTask = nil
         calendarDirty = true
     }
 
@@ -98,7 +116,12 @@ final class DesktopWidgetsService {
         panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         panel.isMovableByWindowBackground = true
-        panel.contentView = NSHostingView(rootView: DesktopWidgetRoot(kind: kind, model: model))
+        let actions = DesktopWidgetActions(
+            showMonth: { [weak self] offset in self?.showMonth(offset: offset) },
+            showToday: { [weak self] in self?.showToday() },
+            select: { [weak self] day in self?.month.selected = Calendar.current.startOfDay(for: day) })
+        panel.contentView = DesktopWidgetHostingView(
+            rootView: DesktopWidgetRoot(kind: kind, model: model, month: month, actions: actions))
         panel.setFrame(CGRect(origin: origin, size: kind.size), display: false)
         panel.orderFrontRegardless()
         panels[kind] = panel
@@ -155,9 +178,42 @@ final class DesktopWidgetsService {
 
     // MARK: Data
 
+    // MARK: Month
+
+    private func showMonth(offset: Int) {
+        let calendar = Calendar.current
+        month.month = WidgetAgenda.month(month.month, offset: offset, calendar: calendar)
+        // The picked day follows into the new month, on its 1st, unless that
+        // month holds today.
+        let today = calendar.startOfDay(for: Date())
+        month.selected = calendar.isDate(today, equalTo: month.month, toGranularity: .month) ? today : month.month
+        loadMonth()
+    }
+
+    private func showToday() {
+        let calendar = Calendar.current
+        month.month = WidgetAgenda.startOfMonth(Date(), calendar: calendar)
+        month.selected = calendar.startOfDay(for: Date())
+        loadMonth()
+    }
+
+    /// Reads the shown grid's events; a newer request wins over an older one.
+    private func loadMonth() {
+        guard panels[.calendarMonth] != nil,
+              let interval = WidgetAgenda.gridInterval(containing: month.month, calendar: .current) else { return }
+        monthTask?.cancel()
+        let shown = month.month
+        monthTask = Task { [weak self] in
+            guard let self else { return }
+            let result = await self.collector.events(in: interval)
+            guard !Task.isCancelled, self.month.month == shown else { return }
+            self.month.accessGranted = result.accessGranted
+            self.month.events = result.events
+        }
+    }
+
     private func startUpdating() {
         guard timer == nil else { return }
-        SystemMonitor.shared.setWidgetsMonitoring(true, consumer: "desktop")
         let timer = Timer(timeInterval: Self.tick, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
@@ -173,6 +229,7 @@ final class DesktopWidgetsService {
                 Task { @MainActor in
                     self?.calendarDirty = true
                     self?.refresh()
+                    self?.loadMonth()
                 }
             })
         }
@@ -186,6 +243,7 @@ final class DesktopWidgetsService {
                 Task { @MainActor in
                     self?.calendarDirty = true
                     self?.refresh()
+                    self?.loadMonth()
                 }
             }
         ticks = 0
@@ -196,13 +254,12 @@ final class DesktopWidgetsService {
     private func refresh() {
         guard timer != nil, !collecting else { return }
         collecting = true
-        let slow = ticks % Self.slowEvery == 0
-        let readsAgenda = slow || calendarDirty
+        let readsAgenda = ticks % Self.slowEvery == 0 || calendarDirty
         calendarDirty = false
         ticks += 1
         Task { [weak self] in
             guard let self else { return }
-            let snapshot = await self.collector.collect(recordsHistory: slow, readsAgenda: readsAgenda)
+            let snapshot = await self.collector.collect(recordsHistory: true, readsAgenda: readsAgenda)
             self.collecting = false
             guard self.timer != nil else { return }
             self.model.snapshot = snapshot

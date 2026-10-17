@@ -22,6 +22,7 @@ struct WidgetSnapshotInputs {
         /// How long ago the reading was taken; the monitor keeps the last one
         /// after it stops sampling, so an old value must not pass as current.
         var secondsSinceRead: TimeInterval
+        var kind: String = "device"
     }
 
     struct Playback {
@@ -72,6 +73,12 @@ struct WidgetSnapshotInputs {
     var netDownBytesPerSec: Double?
     var netUpBytesPerSec: Double?
     var diskFreeBytes: UInt64?
+    var diskTotalBytes: UInt64?
+    /// Fractions 0...1 (memory, GPU) and bytes per second (network), oldest first.
+    var memoryHistory: [Double] = []
+    var gpuHistory: [Double] = []
+    var netDownHistory: [Double] = []
+    var netUpHistory: [Double] = []
 
     // Power; nil when the Mac reported nothing (a desktop with no SMC power keys)
     var power: Power?
@@ -99,8 +106,9 @@ struct WidgetSnapshotInputs {
 }
 
 enum WidgetSnapshotBuilder {
-    /// One point per snapshot write, about a minute apart: half an hour of CPU.
-    static let historyPoints = 30
+    /// The longest line a card draws. The desktop cards sample every few
+    /// seconds (a few minutes of history); the widget extension once a minute.
+    static let historyPoints = 60
     /// A week of events, for the strip of days; only today's and tomorrow's
     /// carry a title or a place.
     static let maxAgendaEvents = 40
@@ -145,7 +153,12 @@ enum WidgetSnapshotBuilder {
             cpuTemperatureCelsius: inputs.cpuTemperature.flatMap(rounded),
             netDownBytesPerSec: inputs.netDownBytesPerSec.flatMap(nonNegative),
             netUpBytesPerSec: inputs.netUpBytesPerSec.flatMap(nonNegative),
-            diskFreeBytes: inputs.diskFreeBytes)
+            diskFreeBytes: inputs.diskFreeBytes,
+            diskTotalBytes: inputs.diskTotalBytes,
+            memoryHistory: downsample(inputs.memoryHistory, to: historyPoints).compactMap(percent),
+            gpuHistory: downsample(inputs.gpuHistory, to: historyPoints).compactMap(percent),
+            netDownHistory: downsample(inputs.netDownHistory, to: historyPoints).map { max(0, $0) },
+            netUpHistory: downsample(inputs.netUpHistory, to: historyPoints).map { max(0, $0) })
         return section == WidgetSnapshot.System() ? nil : section
     }
 
@@ -155,7 +168,8 @@ enum WidgetSnapshotBuilder {
             let name = device.name.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty, device.secondsSinceRead.isFinite,
                   device.secondsSinceRead <= maxPeripheralAge else { return nil }
-            return WidgetSnapshot.Peripheral(name: name, percent: min(100, max(0, device.percent)))
+            return WidgetSnapshot.Peripheral(name: name, percent: min(100, max(0, device.percent)),
+                                             kind: device.kind)
         }.sorted { ($0.percent, $0.name) < ($1.percent, $1.name) }.prefix(maxPeripherals))
         let reading = inputs.power
         guard reading != nil || !peripherals.isEmpty else { return nil }
