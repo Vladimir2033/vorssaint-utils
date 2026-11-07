@@ -16,6 +16,7 @@ struct MetricsTests {
             }),
             ("metrics", {
                 MetricsFeatureTests.run(suite)
+                DiskCapacityTests.run(suite)
                 MenuBarBatteryWarningTests.run(suite)
                 ProcessNameContract.run(suite)
                 SystemMonitorCPUTests.run(suite)
@@ -37,21 +38,34 @@ struct MetricsTests {
             ("pointer-input", {
                 PointerOnDisplayContract.run(suite)
                 PointerInputFeatureTests.run(suite)
+                MouseSpacesGestureTapTests.run(suite)
+                SmoothScrollRoutingTests.run(suite)
                 KeyboardDebounceTapTests.run(suite)
                 PointerDisplayLookupContract.run(suite)
                 SuperKeyTapContract.run(suite)
                 PointerScreenContract.run(suite)
             }),
-            ("scroll-modifier", { ScrollHorizontalModifierTests.run(suite) }),
+            ("scroll-modifier", {
+                ScrollHorizontalModifierTests.run(suite)
+                ScrollZoomFocusTests.run(suite)
+            }),
             ("linear-scroll", { LinearScrollTapTests.run(suite) }),
             ("preferences", { PreferencesFeatureTests.run(suite) }),
-            ("app-management", { AppManagementFeatureTests.run(suite) }),
+            ("app-management", {
+                AppManagementFeatureTests.run(suite)
+                DiskImageHomebrewTests.run(suite)
+            }),
             ("window-layout", { WindowLayoutFeatureTests.run(suite) }),
             ("media", { MediaFeatureTests.run(suite) }),
+            ("media-layout", { MediaWorkspaceLayoutTests.run(suite) }),
             ("mixer", {
+                MixerRenderContinuityTests.run(suite)
                 MixerNativeDragTests.run(suite)
                 MixerOutputAdjustmentContract.run(suite)
+                MixerHeadphonesDisconnectContract.run(suite)
                 MixerLevelCompensationContract.run(suite)
+                MixerTapConfigurationTests.run(suite)
+                MixerGainRampContract.run(suite)
                 SoundOutputSwitchContract.run(suite)
                 MixerUniversalRoutingContract.run(suite)
                 AirPlayRingBufferContract.run(suite)
@@ -64,6 +78,7 @@ struct MetricsTests {
                 AirPlayAvailabilityContract.run(suite)
                 AirPlayConcurrentLanesContract.run(suite)
                 AirPlayBacklogContract.run(suite)
+                AirPlayIdleContract.run(suite)
                 MixerInputVolumeContract.run(suite)
                 MixerPercentKeyTests.run(suite)
                 MixerFeatureTests.run(suite)
@@ -78,12 +93,24 @@ struct MetricsTests {
                 UpdateAdminInstallContract.run(suite)
                 UpdateHighlightsTests.run(suite)
                 UpdateIntroFlowTests.run(suite)
+                ReleaseDigestTests.run(suite)
             }),
             ("repository", { RepositoryFeatureTests.run(suite) }),
             ("screenshots", {
+                ScreenshotClipboardTests.run(suite)
+                ScreenshotAutoCopyTests.run(suite)
+                ScreenshotCanvasSupportTests.run(suite)
+                ScreenshotImageLayerTests.run(suite)
+                ScreenshotImageImportTests.run(suite)
+                ScreenshotImageFileTests.run(suite)
+                ScreenshotCanvasModelTests.run(suite)
+                ScreenTextCompletionTests.run(suite)
+                ScreenshotOCRControlTests.run(suite)
                 ScreenshotPreviewHoverTests.run(suite)
                 ScreenshotWatermarkTests.run(suite)
                 ScreenshotFeatureTests.run(suite)
+                RecentCapturePanelTests.run(suite)
+                ScreenshotSpotlightEditingTests.run(suite)
                 ScreenshotShareCompletionTests.run(suite)
                 ScreenshotAutoShelfTests.run(suite)
                 ScreenshotScrollingCaptureTests.run(suite)
@@ -91,12 +118,18 @@ struct MetricsTests {
                 ScreenCaptureToolPickerTests.run(suite)
             }),
             ("recorder", {
+                RecorderGIFWriterTests.run(suite)
                 RecorderFeatureTests.run(suite)
                 RecorderZoomAimingTests.run(suite)
                 RecorderExportSpeedTests.run(suite)
+                RecorderExportControlsTests.run(suite)
                 RecorderExportRenderingTests.run(suite)
             }),
-            ("command-bar", { CommandBarFeatureTests.run(suite) }),
+            ("command-bar", {
+                CommandBarFeatureTests.run(suite)
+                CommandBarSelectionTests.run(suite)
+            }),
+            ("transient-paste", { TransientPasteTests.run(suite) }),
             ("notch-music", { NotchMusicExtrasTests.run(suite) }),
             ("notch", {
                 NotchTests.run(suite)
@@ -105,6 +138,7 @@ struct MetricsTests {
                 PlainTextLineMoverTests.run(suite)
                 NotchVolumeKeyTests.run(suite)
                 NotchSettingsTabRowTests.run(suite)
+                NotchPresentationProbeArgumentTests.run(suite)
             }),
             ("switcher-model", { SwitcherModelFeatureTests.run(suite) }),
             ("agents", { NotchAgentTests.run(suite) }),
@@ -112,17 +146,23 @@ struct MetricsTests {
                 FeatureCatalogTests.run(suite)
                 MenuPanelSectionGateContract.run(suite)
             }),
+            ("shortcut-clearing", { ShortcutClearingTests.run(suite) }),
             ("utilities", {
                 UtilitiesFeatureTests.run(suite)
+                TextSnippetExpansionTests.run(suite)
                 QuickTogglesAlertTests.run(suite)
+                QuickTogglesQuitAllTests.run(suite)
+                QuitAppsRuntimeTests.run(suite)
                 PortManagerRefreshTests.run(suite)
             }),
             ("settings", {
                 SettingsFeatureTests.run(suite)
+                RadialFilePickerTests.run(suite)
                 SettingsWindowTests.run { suite.expect($0, $1) }
                 NotchSettingsChoiceTests.run(suite)
                 MonitorTokenTests.run(suite)
             }),
+            ("feature-hub-layout", { FeatureHubLayoutTests.run(suite) }),
             ("display-restoration", {
                 DisplayRestorationTests.run(suite)
                 BrightnessStepTests.run(suite)
@@ -141,9 +181,13 @@ struct MetricsTests {
                 StorageFeatureTests.run(suite)
                 ScratchpadStoreContractTests.run(suite)
             }),
-            ("quit-protection", { QuitProtectionHUD.progressChecks(suite) }),
+            ("quit-protection", {
+                QuitProtectionHUD.progressChecks(suite)
+                QuitProtectionRoutingContract.QuitProtectionService.routingChecks(suite)
+            }),
             ("scratchpad", { ScratchpadMarkTests.run { suite.expect($0, $1) } }),
             ("recording", {
+                RecorderPreparationTests.run(suite)
                 RecorderSampleTimingTests.run(suite)
                 RecorderWriterTests.run(suite)
                 RecorderExportChipTests.run { suite.expect($0, $1) }
@@ -154,6 +198,7 @@ struct MetricsTests {
                 NetworkAddressTests.run { suite.expect($0, $1) }
             }),
             ("app-updates", {
+                AppUpdateHandoffTests.run(suite)
                 AppUpdatesContract.run(suite)
                 AppUpdateRulesContract.run(suite)
             }),
@@ -168,7 +213,10 @@ struct MetricsTests {
                 CleanerLayoutTests.run(suite)
             }),
             ("uninstaller", {
+                HomebrewOwnershipTests.run(suite)
                 UninstallerFlowTests.run(suite)
+                UninstallerBulkSelectionTests.run(suite)
+                MixedStateCheckboxTests.run(suite)
                 UninstallerCommandBarCleanupTests.run(suite)
                 SelfUninstallContract.run(suite)
             }),
@@ -182,8 +230,14 @@ struct MetricsTests {
             }),
             ("spaces-order", { SpacesOrderTests.run(suite) }),
             ("switcher", {
+                SwitcherHoverSelectionTests.run(suite)
+                SwitcherAllWindowsTests.run(suite)
+                AXWindowResolverTests.run(suite)
+                SwitcherSearchLayoutTests.run(suite)
                 SwitcherScrollContract.run(suite)
                 SwitcherActivationTests.run(suite)
+                AXHiddenSpaceLookupTests.run(suite)
+                SwitcherWindowCloseTests.run(suite)
                 WindowServerCaptureContract.run(suite)
             }),
             ("keep-awake", {
@@ -192,7 +246,10 @@ struct MetricsTests {
                 KeepAwakeLidSleepTests.run { suite.expect($0, $1) }
                 KeepAwakeTimerHandoffTests.run { suite.expect($0, $1) }
             }),
-            ("wallpaper", { WallpaperContract.run(suite) }),
+            ("wallpaper", {
+                WallpaperContract.run(suite)
+                WallpaperThumbnailTests.run(suite)
+            }),
             ("emoji", { CommandBarEmojiContract.run(suite) }),
         ]
         var selected = Set<String>()
