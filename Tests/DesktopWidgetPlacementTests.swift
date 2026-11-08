@@ -55,7 +55,7 @@ enum DesktopWidgetPlacementTests {
                      "a card left on a display that is gone is not kept")
         suite.expect(DesktopWidgetPlacement.usable(CGPoint(x: 1570, y: 100), size: size, screens: [screen]) == nil,
                      "a card with only a sliver on screen cannot be grabbed, so it is not kept")
-        suite.expect(DesktopWidgetPlacement.usable(CGPoint(x: .nan, y: 0), size: size, screens: [screen]) == nil,
+        suite.expect(DesktopWidgetPlacement.usable(CGPoint(x: CGFloat.nan, y: 0), size: size, screens: [screen]) == nil,
                      "a position that is not a number is not kept")
         let second = CGRect(x: 1600, y: 0, width: 1000, height: 800)
         suite.expect(DesktopWidgetPlacement.usable(CGPoint(x: 2000, y: 100), size: size, screens: [screen, second]) != nil,
