@@ -13,6 +13,7 @@ enum DesktopWidgetPlacementTests {
     static func run(_ suite: TestSuite) {
         stack(suite)
         saved(suite)
+        drag(suite)
         text(suite)
     }
 
@@ -68,6 +69,17 @@ enum DesktopWidgetPlacementTests {
         suite.expect(placed[.system] == CGPoint(x: 120, y: 340), "a saved position wins over the default")
         suite.expect(placed[.agenda] == DesktopWidgetPlacement.defaultOrigins(for: [.system, .agenda], in: screen)[.agenda],
                      "an unreachable saved position falls back to the card's default place")
+    }
+
+    private static func drag(_ suite: TestSuite) {
+        let moved = DesktopWidgetPlacement.dragged(from: CGPoint(x: 100, y: 200),
+                                                   mouseStart: CGPoint(x: 150, y: 260),
+                                                   mouseNow: CGPoint(x: 400, y: 120))
+        suite.expect(moved == CGPoint(x: 350, y: 60), "a dragged card moves by exactly how far the pointer went: \(moved)")
+        let still = DesktopWidgetPlacement.dragged(from: CGPoint(x: 100, y: 200),
+                                                   mouseStart: CGPoint(x: 150, y: 260),
+                                                   mouseNow: CGPoint(x: 150, y: 260))
+        suite.expect(still == CGPoint(x: 100, y: 200), "a card does not jump when the pointer has not moved")
     }
 
     private static func text(_ suite: TestSuite) {

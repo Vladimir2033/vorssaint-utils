@@ -41,6 +41,8 @@ final class DesktopWidgetsService {
     private var ticks = 0
     private var collecting = false
     private var calendarDirty = true
+    /// The card being dragged, its origin and the pointer when the drag began.
+    private var dragStart: (kind: DesktopWidgetKind, origin: CGPoint, mouse: CGPoint)?
 
     /// How often the cards redraw and add a point to their lines. While a
     /// System card is on, the monitor samples at the panel's pace to match.
@@ -118,11 +120,15 @@ final class DesktopWidgetsService {
         // Just above the desktop icons, so every app window covers the card.
         panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
-        panel.isMovableByWindowBackground = true
+        // Dragging is the card's own gesture (DesktopWidgetRoot); AppKit's
+        // background drag never reached the window through SwiftUI.
+        panel.isMovableByWindowBackground = false
         let actions = DesktopWidgetActions(
             showMonth: { [weak self] offset in self?.showMonth(offset: offset) },
             showToday: { [weak self] in self?.showToday() },
-            select: { [weak self] day in self?.month.selected = Calendar.current.startOfDay(for: day) })
+            select: { [weak self] day in self?.month.selected = Calendar.current.startOfDay(for: day) },
+            drag: { [weak self] in self?.drag(kind) },
+            dragEnded: { [weak self] in self?.endDrag(kind) })
         panel.contentView = DesktopWidgetHostingView(
             rootView: DesktopWidgetRoot(kind: kind, model: model, month: month, actions: actions))
         panel.setFrame(CGRect(origin: origin, size: kind.size), display: false)
@@ -138,6 +144,20 @@ final class DesktopWidgetsService {
         pendingSaves.removeValue(forKey: kind)?.cancel()
         if let token = moveTokens.removeValue(forKey: kind) { NotificationCenter.default.removeObserver(token) }
         panels.removeValue(forKey: kind)?.close()
+    }
+
+    private func drag(_ kind: DesktopWidgetKind) {
+        guard let panel = panels[kind] else { return }
+        let mouse = NSEvent.mouseLocation
+        if dragStart?.kind != kind { dragStart = (kind, panel.frame.origin, mouse) }
+        guard let start = dragStart else { return }
+        panel.setFrameOrigin(DesktopWidgetPlacement.dragged(from: start.origin, mouseStart: start.mouse,
+                                                            mouseNow: mouse))
+    }
+
+    private func endDrag(_ kind: DesktopWidgetKind) {
+        dragStart = nil
+        saveOrigin(of: kind)
     }
 
     /// A drag is a stream of moves; the spot is saved once it settles.

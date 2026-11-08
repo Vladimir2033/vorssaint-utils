@@ -84,6 +84,14 @@ enum DesktopWidgetPlacement {
         return enough ? origin : nil
     }
 
+    /// Where a card goes while it is dragged: its origin when the drag began,
+    /// moved by how far the pointer has gone since, both in screen points. The
+    /// pointer is read on the screen, not inside the card, because the card
+    /// moves under it and a position inside it would chase itself.
+    static func dragged(from origin: CGPoint, mouseStart: CGPoint, mouseNow: CGPoint) -> CGPoint {
+        CGPoint(x: origin.x + mouseNow.x - mouseStart.x, y: origin.y + mouseNow.y - mouseStart.y)
+    }
+
     static func format(_ origin: CGPoint) -> String {
         "\(Int(origin.x.rounded())),\(Int(origin.y.rounded()))"
     }

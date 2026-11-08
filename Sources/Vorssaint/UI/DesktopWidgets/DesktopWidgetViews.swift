@@ -101,6 +101,15 @@ struct DesktopWidgetRoot: View {
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
             .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5))
+        // Moving the card is the card's own gesture. AppKit's "movable by
+        // window background" never fired: the SwiftUI view takes every
+        // mouse-down, so AppKit never saw a background to drag (seen on the
+        // MacBook Air, 08/11). Buttons inside, such as the month arrows, keep
+        // their clicks: a child's tap wins over this drag.
+        .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .gesture(DragGesture(minimumDistance: 2)
+            .onChanged { _ in actions.drag() }
+            .onEnded { _ in actions.dragEnded() })
     }
 }
 
@@ -109,6 +118,9 @@ struct DesktopWidgetActions {
     var showMonth: @MainActor (Int) -> Void
     var showToday: @MainActor () -> Void
     var select: @MainActor (Date) -> Void
+    /// The card follows the pointer while it is dragged, then keeps its spot.
+    var drag: @MainActor () -> Void
+    var dragEnded: @MainActor () -> Void
 }
 
 enum DesktopWidgetFormat {
