@@ -15,6 +15,7 @@ enum SystemMonitorPlanTests {
         var notchAccessoryMonitoring = false
         var widgetsMonitoring = false
         var widgetsAccessories = false
+        var widgetsBattery = false
         static var fanTelemetryAvailable: Bool { true }
     }
 
@@ -167,5 +168,20 @@ enum SystemMonitorPlanTests {
         defaults.set(false, forKey: AppFeature.monitorPower.availabilityKey)
         suite.expect(!monitor.currentPlan(defaults: defaults).needPeripheralBattery,
                      "an uninstalled power monitor is not read for the accessories card either")
+
+        // The Battery card reads the Mac's battery and nothing the other cards read.
+        monitor.widgetsAccessories = false
+        defaults.set(true, forKey: AppFeature.monitorPower.availabilityKey)
+        suite.expect(!monitor.currentPlan(defaults: defaults).needPower,
+                     "the battery is not read for the Battery card while it is off")
+        monitor.widgetsBattery = true
+        let battery = monitor.currentPlan(defaults: defaults)
+        suite.expect(battery.needPower && !battery.needCPU && !battery.needGPUUsage && !battery.needPeripheralBattery
+                         && !battery.needPowerDraw,
+                     "the Battery card reads the battery alone: no CPU, graphics, accessories or live watts")
+        defaults.set(false, forKey: AppFeature.monitorPower.availabilityKey)
+        suite.expect(!monitor.currentPlan(defaults: defaults).needPower,
+                     "an uninstalled power monitor is not read for the Battery card either")
+        monitor.widgetsBattery = false
     }
 }

@@ -18,6 +18,7 @@ struct DesktopWidgetsCard: View {
     @AppStorage(DefaultsKey.desktopWidgetWorldClock) private var worldClock = false
     @AppStorage(DefaultsKey.desktopWidgetAccessories) private var accessories = false
     @AppStorage(DefaultsKey.desktopWidgetWeather) private var weather = false
+    @AppStorage(DefaultsKey.desktopWidgetBattery) private var battery = false
     @State private var weatherCities: [WeatherCity] = DesktopWeatherService.shared.cities
     @State private var weatherSearch = ""
     @State private var weatherResults: [WeatherCity] = []
@@ -30,7 +31,7 @@ struct DesktopWidgetsCard: View {
     private var usesCalendar: Bool { agenda || nextEvent || calendarMonth }
     private var anyOn: Bool {
         system || systemCompact || systemDetailed || agenda || nextEvent || calendarMonth || worldClock || accessories
-            || weather
+            || weather || battery
     }
 
     var body: some View {
@@ -49,6 +50,7 @@ struct DesktopWidgetsCard: View {
             if worldClock { clockEditor }
             switchRow("cloud.sun", strings.weather, $weather)
             if weather { weatherEditor }
+            switchRow("battery.75percent", strings.battery, $battery)
             switchRow("keyboard", strings.accessories, $accessories)
             if accessories {
                 Text(strings.accessoriesCaption)

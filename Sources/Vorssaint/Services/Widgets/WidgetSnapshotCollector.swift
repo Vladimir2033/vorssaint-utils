@@ -21,6 +21,9 @@ final class WidgetSnapshotCollector {
     private var gpuHistory: [Double] = []
     private var netDownHistory: [Double] = []
     private var netUpHistory: [Double] = []
+    /// The charge moves slowly: one point a minute, an hour of it.
+    private var chargeHistory: [Int] = []
+    private var lastChargeRecord = Date.distantPast
     private var agenda: (accessGranted: Bool, events: [WidgetSnapshotInputs.AgendaEvent])?
 
     /// `recordsHistory` adds a CPU point (about once a minute);
@@ -78,10 +81,20 @@ final class WidgetSnapshotCollector {
         let disk = reading.disk?.devices.first(where: \.isInternal) ?? reading.disk?.devices.first
         inputs.diskFreeBytes = disk?.freeBytes
         inputs.diskTotalBytes = disk?.totalBytes
+        if let charge = reading.power?.chargePercent, reading.power?.hasBattery == true,
+           Date().timeIntervalSince(lastChargeRecord) >= 60 {
+            lastChargeRecord = Date()
+            chargeHistory.append(charge)
+            if chargeHistory.count > WidgetSnapshotBuilder.historyPoints {
+                chargeHistory.removeFirst(chargeHistory.count - WidgetSnapshotBuilder.historyPoints)
+            }
+        }
         inputs.power = reading.power.map {
             WidgetSnapshotInputs.Power(hasBattery: $0.hasBattery, chargePercent: $0.chargePercent,
                                        isCharging: $0.isCharging, externalConnected: $0.externalConnected,
-                                       timeRemainingSeconds: $0.timeRemainingSeconds)
+                                       timeRemainingSeconds: $0.timeRemainingSeconds,
+                                       healthPercent: $0.healthPercent, cycleCount: $0.cycleCount,
+                                       chargeHistory: chargeHistory)
         }
         let uptime = ProcessInfo.processInfo.systemUptime
         inputs.peripherals = reading.peripheralBatteries.compactMap { device in

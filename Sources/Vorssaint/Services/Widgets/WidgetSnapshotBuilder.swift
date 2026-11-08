@@ -41,6 +41,10 @@ struct WidgetSnapshotInputs {
         var isCharging = false
         var externalConnected = false
         var timeRemainingSeconds: TimeInterval?
+        var healthPercent: Double?
+        var cycleCount: Int?
+        /// Charge percentages, oldest first.
+        var chargeHistory: [Int] = []
     }
 
     struct AgendaEvent {
@@ -179,7 +183,10 @@ enum WidgetSnapshotBuilder {
             isCharging: reading?.isCharging ?? false,
             externalConnected: reading?.externalConnected ?? false,
             timeRemainingSeconds: reading?.timeRemainingSeconds.flatMap(rounded).flatMap { $0 > 0 ? $0 : nil },
-            peripherals: peripherals)
+            peripherals: peripherals,
+            healthPercent: reading?.healthPercent.flatMap(rounded).map { min(100, max(0, $0)) },
+            cycleCount: reading?.cycleCount.flatMap { $0 >= 0 ? $0 : nil },
+            chargeHistory: Array((reading?.chargeHistory ?? []).suffix(historyPoints)).map { min(100, max(0, $0)) })
     }
 
     private static func agents(_ inputs: WidgetSnapshotInputs, now: Date) -> WidgetSnapshot.Agents? {

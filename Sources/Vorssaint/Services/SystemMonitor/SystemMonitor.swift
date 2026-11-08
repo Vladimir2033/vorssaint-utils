@@ -159,6 +159,8 @@ final class SystemMonitor: ObservableObject {
         widgetConsumers.contains("desktop") || widgetConsumers.contains("extension")
     }
     private var widgetsAccessories: Bool { widgetConsumers.contains("accessories") }
+    /// The desktop Battery card: the Mac's own battery and nothing else.
+    private var widgetsBattery: Bool { widgetConsumers.contains("battery") }
     private var widgetsForeground: Bool { widgetConsumers.contains("desktop") }
     private var menuBarActive = false
     private var alertsActive = false
@@ -513,7 +515,7 @@ final class SystemMonitor: ObservableObject {
     /// independent surfaces cannot desync.
     private var fullMonitorVisible: Bool { panelClients > 0 }
 
-    private var shouldRun: Bool { fullMonitorVisible || menuPanelNeeds.any || notchDetailNeeds.any || notchVisible || notchAccessoryMonitoring || widgetsMonitoring || widgetsAccessories || menuBarActive || alertsActive }
+    private var shouldRun: Bool { fullMonitorVisible || menuPanelNeeds.any || notchDetailNeeds.any || notchVisible || notchAccessoryMonitoring || widgetsMonitoring || widgetsAccessories || widgetsBattery || menuBarActive || alertsActive }
 
     private func shouldSample(defaults: UserDefaults = .standard) -> Bool {
         shouldRun && currentPlan(defaults: defaults).any
@@ -612,7 +614,7 @@ final class SystemMonitor: ObservableObject {
             || defaults.bool(forKey: DefaultsKey.menuBarDiskUsage)
             || defaults.bool(forKey: DefaultsKey.menuBarDiskActivity)
             || alertDisk
-        plan.needPower = panelNeedsPower || panelBattery || widgetsMonitoring
+        plan.needPower = panelNeedsPower || panelBattery || widgetsMonitoring || widgetsBattery
             || defaults.bool(forKey: DefaultsKey.menuBarPower)
             || (hasInternalBattery && defaults.bool(forKey: DefaultsKey.menuBarBattery))
             || (hasInternalBattery && defaults.bool(forKey: DefaultsKey.menuBarBatteryTime))

@@ -900,6 +900,7 @@ enum DefaultsKey {
     static let desktopWidgetWorldClock = "desktopWidgetWorldClock"
     static let desktopWidgetAccessories = "desktopWidgetAccessories"
     static let desktopWidgetWeather = "desktopWidgetWeather"
+    static let desktopWidgetBattery = "desktopWidgetBattery"
     /// [JSON WeatherCity] the weather card follows, in order.
     static let desktopWidgetWeatherCities = "desktopWidgetWeatherCities"
     /// [TimeZone.identifier] the world clock shows, in order.
@@ -1521,6 +1522,7 @@ enum Defaults {
         DefaultsKey.desktopWidgetAccessories: false,
         DefaultsKey.desktopWidgetClocks: ["America/New_York", "Europe/London", "Asia/Tokyo"],
         DefaultsKey.desktopWidgetWeather: false,
+        DefaultsKey.desktopWidgetBattery: false,
         DefaultsKey.desktopWidgetWeatherCities: [String](),
         DefaultsKey.notchAgentsEnabled: false,
         DefaultsKey.notchAgentsClaude: true,

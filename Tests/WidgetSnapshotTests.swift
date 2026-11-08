@@ -103,6 +103,15 @@ enum WidgetSnapshotTests {
                      "the three lowest batteries, unnamed, stale and unreadable ones left out: \(power?.peripherals ?? [])")
         suite.expect(power?.peripherals.first?.percent == 0, "a negative percent shows as empty")
 
+        inputs.power = .init(hasBattery: true, chargePercent: 80, healthPercent: 104.6, cycleCount: -2,
+                             chargeHistory: Array(repeating: 90, count: 70) + [120, -5])
+        let battery = WidgetSnapshotBuilder.build(inputs, now: now).power
+        suite.expect(battery?.healthPercent == 100, "health never shows above 100%")
+        suite.expect(battery?.cycleCount == nil, "an impossible cycle count is left out")
+        suite.expect(battery?.chargeHistory.count == WidgetSnapshotBuilder.historyPoints
+                         && battery?.chargeHistory.suffix(2) == [100, 0],
+                     "the charge line keeps the newest hour and holds each point to 0...100")
+
         let later = now.addingTimeInterval(3600)
         inputs.agentWindows = [
             .init(provider: "Claude", kind: "session", minutes: 300, usedPercent: 72.4, resetsAt: later),

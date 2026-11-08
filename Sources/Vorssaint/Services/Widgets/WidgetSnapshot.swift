@@ -58,6 +58,11 @@ struct WidgetSnapshot: Codable, Equatable {
         var externalConnected: Bool
         var timeRemainingSeconds: Int?
         var peripherals: [Peripheral] = []
+        /// Max capacity against design, 0...100.
+        var healthPercent: Int?
+        var cycleCount: Int?
+        /// Charge over the last hour, one point a minute, oldest first.
+        var chargeHistory: [Int] = []
     }
 
     struct Peripheral: Codable, Equatable {

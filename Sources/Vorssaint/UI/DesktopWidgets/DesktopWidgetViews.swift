@@ -93,6 +93,8 @@ struct DesktopWidgetRoot: View {
                 DesktopAccessoriesCard(power: model.snapshot?.power, strings: strings)
             case .weather:
                 DesktopWeatherCard(strings: strings)
+            case .battery:
+                DesktopBatteryCard(power: model.snapshot?.power, strings: strings)
             }
         }
         .padding(14)
@@ -1117,5 +1119,107 @@ struct DesktopWeatherCard: View {
                     .frame(width: 46, alignment: .trailing)
             }
         }
+    }
+}
+
+// MARK: - Battery
+
+/// The Mac's own battery: the charge as a large ring, where the power comes
+/// from, the time left, health and cycles, and the charge over the last hour.
+struct DesktopBatteryCard: View {
+    let power: WidgetSnapshot.Power?
+    let strings: DesktopWidgetsFeatureStrings
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            DesktopWidgetHeader(title: strings.battery, symbol: symbol)
+            if let power, power.hasBattery, let charge = power.chargePercent {
+                content(power, charge: charge)
+            } else {
+                Spacer(minLength: 0)
+                Text(power == nil ? "–" : strings.noBattery)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private var symbol: String {
+        guard let power, power.hasBattery else { return "powerplug" }
+        if power.isCharging { return "battery.100percent.bolt" }
+        if power.externalConnected { return "powerplug" }
+        return "battery.75percent"
+    }
+
+    private func color(_ power: WidgetSnapshot.Power, charge: Int) -> Color {
+        power.isCharging ? DesktopPalette.memory : DesktopPalette.battery(charge)
+    }
+
+    private func content(_ power: WidgetSnapshot.Power, charge: Int) -> some View {
+        HStack(alignment: .center, spacing: 16) {
+            DesktopRing(fraction: Double(charge) / 100, color: color(power, charge: charge), lineWidth: 9) {
+                VStack(spacing: 0) {
+                    Text("\(charge)")
+                        .font(.system(size: 30, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                    if power.isCharging {
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(DesktopPalette.memory)
+                    } else {
+                        Text("%")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .frame(width: 104, height: 104)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(power.isCharging ? strings.charging : (power.externalConnected ? strings.pluggedIn : strings.onBattery))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(power.isCharging ? DesktopPalette.memory : .primary)
+                if let seconds = power.timeRemainingSeconds, !power.externalConnected {
+                    Text(String(format: strings.timeLeftFormat, Self.duration(seconds)))
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                HStack(spacing: 14) {
+                    if let health = power.healthPercent {
+                        detail(strings.health, "\(health)%")
+                    }
+                    if let cycles = power.cycleCount {
+                        detail(strings.cycles, "\(cycles)")
+                    }
+                }
+                if power.chargeHistory.count > 1 {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(strings.lastHour)
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                        DesktopSparkline(values: power.chargeHistory.map(Double.init),
+                                         color: color(power, charge: charge), ceiling: 100)
+                            .frame(height: 30)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private func detail(_ title: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title).font(.system(size: 10)).foregroundStyle(.secondary)
+            Text(value).font(.system(size: 13, weight: .semibold)).monospacedDigit()
+        }
+    }
+
+    /// "3 h 20 min" in the Mac's language.
+    static func duration(_ seconds: Int) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.unitsStyle = .abbreviated
+        formatter.allowedUnits = seconds >= 3600 ? [.hour, .minute] : [.minute]
+        return formatter.string(from: TimeInterval(max(60, seconds))) ?? ""
     }
 }

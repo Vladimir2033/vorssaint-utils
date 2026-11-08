@@ -62,6 +62,15 @@ struct DesktopWidgetsFeatureStrings {
     let condSnow: String
     let condShowers: String
     let condThunderstorm: String
+    let battery: String
+    let charging: String
+    let pluggedIn: String
+    let onBattery: String
+    let timeLeftFormat: String
+    let health: String
+    let cycles: String
+    let noBattery: String
+    let lastHour: String
 }
 
 extension FeatureStrings {
@@ -144,7 +153,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Rain",
         condSnow: "Snow",
         condShowers: "Showers",
-        condThunderstorm: "Thunderstorm"
+        condThunderstorm: "Thunderstorm",
+        battery: "Battery",
+        charging: "Charging",
+        pluggedIn: "Plugged in",
+        onBattery: "On battery",
+        timeLeftFormat: "%@ left",
+        health: "Health",
+        cycles: "Cycles",
+        noBattery: "This Mac has no battery",
+        lastHour: "Last hour"
     )
 
     static let ptBR = DesktopWidgetsFeatureStrings(
@@ -204,7 +222,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Chuva",
         condSnow: "Neve",
         condShowers: "Pancadas de chuva",
-        condThunderstorm: "Tempestade"
+        condThunderstorm: "Tempestade",
+        battery: "Bateria",
+        charging: "Carregando",
+        pluggedIn: "Na tomada",
+        onBattery: "Na bateria",
+        timeLeftFormat: "restam %@",
+        health: "Saúde",
+        cycles: "Ciclos",
+        noBattery: "Este Mac não tem bateria",
+        lastHour: "Última hora"
     )
 
     static let tr = DesktopWidgetsFeatureStrings(
@@ -264,7 +291,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Yağmur",
         condSnow: "Kar",
         condShowers: "Sağanak",
-        condThunderstorm: "Gök gürültülü fırtına"
+        condThunderstorm: "Gök gürültülü fırtına",
+        battery: "Pil",
+        charging: "Şarj oluyor",
+        pluggedIn: "Prize takılı",
+        onBattery: "Pilde",
+        timeLeftFormat: "%@ kaldı",
+        health: "Sağlık",
+        cycles: "Döngü",
+        noBattery: "Bu Mac’te pil yok",
+        lastHour: "Son bir saat"
     )
 
     static let ru = DesktopWidgetsFeatureStrings(
@@ -324,7 +360,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Дождь",
         condSnow: "Снег",
         condShowers: "Ливни",
-        condThunderstorm: "Гроза"
+        condThunderstorm: "Гроза",
+        battery: "Аккумулятор",
+        charging: "Заряжается",
+        pluggedIn: "От сети",
+        onBattery: "От аккумулятора",
+        timeLeftFormat: "осталось %@",
+        health: "Состояние",
+        cycles: "Циклы",
+        noBattery: "У этого Mac нет аккумулятора",
+        lastHour: "Последний час"
     )
 
     static let es = DesktopWidgetsFeatureStrings(
@@ -384,7 +429,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Lluvia",
         condSnow: "Nieve",
         condShowers: "Chubascos",
-        condThunderstorm: "Tormenta"
+        condThunderstorm: "Tormenta",
+        battery: "Batería",
+        charging: "Cargando",
+        pluggedIn: "Conectado",
+        onBattery: "Con batería",
+        timeLeftFormat: "quedan %@",
+        health: "Salud",
+        cycles: "Ciclos",
+        noBattery: "Este Mac no tiene batería",
+        lastHour: "Última hora"
     )
 
     static let sk = DesktopWidgetsFeatureStrings(
@@ -444,7 +498,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Dážď",
         condSnow: "Sneh",
         condShowers: "Prehánky",
-        condThunderstorm: "Búrka"
+        condThunderstorm: "Búrka",
+        battery: "Batéria",
+        charging: "Nabíja sa",
+        pluggedIn: "Pripojené k sieti",
+        onBattery: "Na batériu",
+        timeLeftFormat: "zostáva %@",
+        health: "Stav",
+        cycles: "Cykly",
+        noBattery: "Tento Mac nemá batériu",
+        lastHour: "Posledná hodina"
     )
 
     static let de = DesktopWidgetsFeatureStrings(
@@ -504,7 +567,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Regen",
         condSnow: "Schnee",
         condShowers: "Schauer",
-        condThunderstorm: "Gewitter"
+        condThunderstorm: "Gewitter",
+        battery: "Batterie",
+        charging: "Wird geladen",
+        pluggedIn: "Am Netzteil",
+        onBattery: "Batteriebetrieb",
+        timeLeftFormat: "noch %@",
+        health: "Zustand",
+        cycles: "Ladezyklen",
+        noBattery: "Dieser Mac hat keine Batterie",
+        lastHour: "Letzte Stunde"
     )
 
     static let fr = DesktopWidgetsFeatureStrings(
@@ -564,7 +636,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Pluie",
         condSnow: "Neige",
         condShowers: "Averses",
-        condThunderstorm: "Orage"
+        condThunderstorm: "Orage",
+        battery: "Batterie",
+        charging: "En charge",
+        pluggedIn: "Branché",
+        onBattery: "Sur batterie",
+        timeLeftFormat: "%@ restantes",
+        health: "État",
+        cycles: "Cycles",
+        noBattery: "Ce Mac n’a pas de batterie",
+        lastHour: "Dernière heure"
     )
 
     static let it = DesktopWidgetsFeatureStrings(
@@ -624,7 +705,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Pioggia",
         condSnow: "Neve",
         condShowers: "Rovesci",
-        condThunderstorm: "Temporale"
+        condThunderstorm: "Temporale",
+        battery: "Batteria",
+        charging: "In carica",
+        pluggedIn: "Collegato",
+        onBattery: "A batteria",
+        timeLeftFormat: "%@ rimanenti",
+        health: "Condizione",
+        cycles: "Cicli",
+        noBattery: "Questo Mac non ha una batteria",
+        lastHour: "Ultima ora"
     )
 
     static let ja = DesktopWidgetsFeatureStrings(
@@ -684,7 +774,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "雨",
         condSnow: "雪",
         condShowers: "にわか雨",
-        condThunderstorm: "雷雨"
+        condThunderstorm: "雷雨",
+        battery: "バッテリー",
+        charging: "充電中",
+        pluggedIn: "電源に接続中",
+        onBattery: "バッテリー駆動",
+        timeLeftFormat: "残り %@",
+        health: "状態",
+        cycles: "充放電回数",
+        noBattery: "この Mac にはバッテリーがありません",
+        lastHour: "過去 1 時間"
     )
 
     static let ko = DesktopWidgetsFeatureStrings(
@@ -744,7 +843,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "비",
         condSnow: "눈",
         condShowers: "소나기",
-        condThunderstorm: "뇌우"
+        condThunderstorm: "뇌우",
+        battery: "배터리",
+        charging: "충전 중",
+        pluggedIn: "전원 연결됨",
+        onBattery: "배터리 사용 중",
+        timeLeftFormat: "%@ 남음",
+        health: "상태",
+        cycles: "사이클",
+        noBattery: "이 Mac에는 배터리가 없음",
+        lastHour: "지난 1시간"
     )
 
     static let zhHans = DesktopWidgetsFeatureStrings(
@@ -804,7 +912,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "雨",
         condSnow: "雪",
         condShowers: "阵雨",
-        condThunderstorm: "雷暴"
+        condThunderstorm: "雷暴",
+        battery: "电池",
+        charging: "正在充电",
+        pluggedIn: "已接通电源",
+        onBattery: "使用电池",
+        timeLeftFormat: "剩余 %@",
+        health: "健康度",
+        cycles: "循环次数",
+        noBattery: "这台 Mac 没有电池",
+        lastHour: "过去一小时"
     )
 
     static let zhTW = DesktopWidgetsFeatureStrings(
@@ -864,7 +981,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "雨",
         condSnow: "雪",
         condShowers: "陣雨",
-        condThunderstorm: "雷雨"
+        condThunderstorm: "雷雨",
+        battery: "電池",
+        charging: "正在充電",
+        pluggedIn: "已接上電源",
+        onBattery: "使用電池",
+        timeLeftFormat: "剩餘 %@",
+        health: "健康度",
+        cycles: "循環次數",
+        noBattery: "這台 Mac 沒有電池",
+        lastHour: "過去一小時"
     )
 
     static let zhHK = DesktopWidgetsFeatureStrings(
@@ -924,7 +1050,16 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "雨",
         condSnow: "雪",
         condShowers: "驟雨",
-        condThunderstorm: "雷暴"
+        condThunderstorm: "雷暴",
+        battery: "電池",
+        charging: "正在充電",
+        pluggedIn: "已接駁電源",
+        onBattery: "使用電池",
+        timeLeftFormat: "剩餘 %@",
+        health: "健康度",
+        cycles: "循環次數",
+        noBattery: "這部 Mac 沒有電池",
+        lastHour: "過去一小時"
     )
 
     static let uk = DesktopWidgetsFeatureStrings(
@@ -984,6 +1119,15 @@ extension DesktopWidgetsFeatureStrings {
         condRain: "Дощ",
         condSnow: "Сніг",
         condShowers: "Зливи",
-        condThunderstorm: "Гроза"
+        condThunderstorm: "Гроза",
+        battery: "Акумулятор",
+        charging: "Заряджається",
+        pluggedIn: "Від мережі",
+        onBattery: "Від акумулятора",
+        timeLeftFormat: "залишилось %@",
+        health: "Стан",
+        cycles: "Цикли",
+        noBattery: "У цього Mac немає акумулятора",
+        lastHour: "Остання година"
     )
 }
