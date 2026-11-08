@@ -931,9 +931,17 @@ enum BlackHoleGlyph {
         return fixedSizeSymbol(named: name)
     }
 
+    /// The idle icon's colour in this fork: yellow, asked for by its owner.
+    /// Upstream leaves the idle mark a template, black or white with the menu
+    /// bar; systemYellow keeps a shade readable on light and dark bars.
+    static let idleTint: NSColor = .systemYellow
+
     static func image(active: Bool) -> NSImage? {
         let tint = KeepAwakeIconTint.current
-        guard active else { return mark() ?? fallback(active: false) }
+        guard active else {
+            guard let idle = mark() else { return fallback(active: false) }
+            return tintedImage(idle, color: idleTint) ?? idle
+        }
         return activeImage(style: .current, tint: tint)
     }
 
