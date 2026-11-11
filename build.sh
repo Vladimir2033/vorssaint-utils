@@ -31,7 +31,9 @@ trap 'exit 1' INT TERM HUP
 # Flags: --dev builds the local-only "Vorssaint (Developer)" variant (its own
 # bundle id, so it coexists with the official app); --install puts it in /Applications.
 # --widgets also embeds the desktop widgets extension (see the block below).
+# --syntex builds Syntex Utils, this fork's own app (see the block below).
 DEV=0
+SYNTEX=0
 INSTALL=0
 TEST=0
 WIDGETS=0
@@ -41,13 +43,33 @@ for arg in "$@"; do
         --dev)     DEV=1 ;;
         --install) INSTALL=1 ;;
         --widgets) WIDGETS=1 ;;
+        --syntex)  SYNTEX=1 ;;
         --test)    TEST=1 ;;
         --test-suite=*) TEST=1; TEST_ARGS+=("--suite=${arg#*=}") ;;
         --list-tests) TEST=1; TEST_ARGS+=(--list) ;;
     esac
 done
 
-if (( DEV )); then
+# Syntex Utils (--syntex): the unofficial personal fork, one app in place of
+# the official Vorssaint and the Developer build that ran side by side.
+# TRADEMARKS.md asks a fork for its own name, icon, bundle id, signing
+# identity and update feed; each one is set below, and the code tells the
+# fork apart by its bundle id (Sources/Vorssaint/Core/SyntexFork.swift).
+# It is a release build: no VORSSAINT_DEVELOPMENT probes, -O, and no WidgetKit
+# extension, since the desktop cards are drawn by the app itself.
+if (( SYNTEX )) && (( DEV || WIDGETS )); then
+    echo "✗ --syntex is its own variant; it does not combine with --dev or --widgets" >&2
+    exit 1
+fi
+
+if (( SYNTEX )); then
+    APP_NAME="Syntex Utils"
+    EXECUTABLE="SyntexUtils"
+    APP_BUNDLE_ID="com.syntropylabs.syntex.utils"
+    BUILD_VARIANT_FLAGS=()
+    APP_OPTIMIZATION_FLAGS=(-O)
+    BUILD_CONFIGURATION="release"
+elif (( DEV )); then
     APP_NAME="Vorssaint (Developer)"
     EXECUTABLE="VorssaintDeveloper"
     APP_BUNDLE_ID="com.vorssaint.utils.dev"
@@ -127,6 +149,41 @@ if (( WIDGETS && ! TEST )); then
     # uses for a Developer ID, now with this identity.
     developer_id_identity() { print -r -- "$WIDGET_IDENTITY"; }
     echo "▸ Widgets: signing with $WIDGET_IDENTITY, App Group $WIDGET_APP_GROUP"
+fi
+
+# Syntex Utils signs with the owner's Apple Development certificate, the one
+# --widgets already used on this Mac: a team-based designated requirement, so
+# granted permissions survive rebuilds, and never the official Developer ID.
+# SYNTEX_TEAM_ID picks the team (the owner's by default) when the keychain
+# holds certificates from more than one; SYNTEX_SIGNING_IDENTITY names one
+# outright. A build without such a certificate stops here instead of falling
+# back to the self-signed or ad-hoc identity, whose permissions would be
+# orphaned by the next rebuild.
+SYNTEX_TEAM_ID="${SYNTEX_TEAM_ID:-LXV5T4G4XZ}"
+if (( SYNTEX && ! TEST )); then
+    SYNTEX_IDENTITY="${SYNTEX_SIGNING_IDENTITY:-}"
+    if [[ -z "$SYNTEX_IDENTITY" ]]; then
+        syntex_candidates=("${(@f)$(security find-identity -v -p codesigning 2>/dev/null \
+            | sed -nE 's/.*"(Apple Development: .*)".*/\1/p' || true)}")
+        for candidate in "${syntex_candidates[@]}"; do
+            [[ -n "$candidate" ]] || continue
+            candidate_team="$(security find-certificate -c "$candidate" -p 2>/dev/null \
+                | openssl x509 -noout -subject 2>/dev/null \
+                | sed -nE 's/.*OU ?= ?([A-Z0-9]{10}).*/\1/p' | head -1 || true)"
+            if [[ "$candidate_team" == "$SYNTEX_TEAM_ID" ]]; then
+                SYNTEX_IDENTITY="$candidate"
+                break
+            fi
+        done
+    fi
+    if [[ -z "$SYNTEX_IDENTITY" ]]; then
+        echo "✗ --syntex needs an Apple Development certificate of team $SYNTEX_TEAM_ID." >&2
+        echo "  Xcode › Settings › Accounts › Manage Certificates creates one;" >&2
+        echo "  SYNTEX_SIGNING_IDENTITY=\"Apple Development: …\" picks one explicitly." >&2
+        exit 1
+    fi
+    developer_id_identity() { print -r -- "$SYNTEX_IDENTITY"; }
+    echo "▸ Syntex Utils: signing with $SYNTEX_IDENTITY"
 fi
 
 codesign_widgets_extension() {
@@ -329,6 +386,7 @@ if (( TEST )); then
         Sources/Vorssaint/Core/QuitProtectionSupport.swift
         Sources/Vorssaint/Core/QuitProtectionStrings.swift
         Sources/Vorssaint/Core/Defaults.swift
+        Sources/Vorssaint/Core/SyntexFork.swift
         Sources/Vorssaint/Core/NotchStrings.swift
         Sources/Vorssaint/Core/NotchTourStrings.swift
         Sources/Vorssaint/Core/NotchEditorStrings.swift
@@ -689,6 +747,7 @@ if (( TEST )); then
         ./Tests/PreferenceCleanupTests.sh || test_status=1
         ./Tests/UninstallSpacesTests.sh || test_status=1
         ./Tests/DeveloperInstallIsolationTests.sh || test_status=1
+        ./Tests/SyntexBrandingTests.sh || test_status=1
     fi
     discard_test_preferences || test_status=1
     exit $test_status
@@ -705,6 +764,27 @@ if (( ! DEV )); then
 fi
 APP_OBJECT_DIR="build/objects/$EXECUTABLE"
 mkdir -p build "$APP_OBJECT_DIR"
+if (( SYNTEX )); then
+    # The app's name in visible texts becomes "Syntex Utils" in copies kept
+    # under build/objects (the release wipe above spares that folder, so an
+    # unchanged copy keeps its date and is not recompiled). The repository's
+    # strings stay as upstream wrote them; see Tools/syntex-branding.pl.
+    echo "▸ Branding visible texts as $APP_NAME…"
+    # Captured first, not read through a process substitution: a failing
+    # rewrite has to stop the build, never compile the unbranded sources.
+    branding_map="$(perl Tools/syntex-branding.pl --swift "$APP_OBJECT_DIR/branded" "${APP_SOURCES[@]}")"
+    typeset -A branded_source
+    for branding_line in "${(@f)branding_map}"; do
+        [[ -n "$branding_line" ]] || continue
+        branded_source[${branding_line%%$'\t'*}]="${branding_line#*$'\t'}"
+    done
+    branded_sources=()
+    for app_source in "${APP_SOURCES[@]}"; do
+        branded_sources+=("${branded_source[$app_source]:-$app_source}")
+    done
+    APP_SOURCES=("${branded_sources[@]}")
+    echo "  ${#branded_source} files rebranded"
+fi
 APP_OUTPUT_FILE_MAP="$APP_OBJECT_DIR/output-file-map.json"
 write_swift_output_file_map "$APP_OUTPUT_FILE_MAP" "$APP_OBJECT_DIR" "${APP_SOURCES[@]}"
 # Without -j the driver compiles one file at a time, and without batch mode
@@ -765,12 +845,20 @@ if (( WIDGETS )); then
 fi
 
 echo "▸ Generating app icon…"
-swift Tools/MakeIcon.swift build/AppIcon.iconset
+if (( SYNTEX )); then
+    swift Tools/MakeSyntexIcon.swift build/AppIcon.iconset
+else
+    swift Tools/MakeIcon.swift build/AppIcon.iconset
+fi
 xattr -c -r build/AppIcon.iconset build/AppIcon.icns build/MenuBarIcon.png build/MenuBarIcon@2x.png build/BrandMark.png 2>/dev/null || true
 ACTOOL_BIN="$(xcrun --find actool 2>/dev/null || true)"
 ICON_TMP="$(mktemp -d)"
 ADAPTIVE_SKIP=""
-if [[ -z "$ACTOOL_BIN" ]]; then
+if (( SYNTEX )); then
+    # The adaptive catalog is the Vorssaint artwork; the fork ships its own
+    # icon as AppIcon.icns only (CFBundleIconName is dropped below).
+    ADAPTIVE_SKIP="Syntex Utils uses its own icon, not the Vorssaint catalog"
+elif [[ -z "$ACTOOL_BIN" ]]; then
     ADAPTIVE_SKIP="actool not found (adaptive icons need Xcode 26+)"
 else
     echo "▸ Compiling adaptive icon catalog…"
@@ -814,9 +902,10 @@ cp CHANGELOG.md "$STAGE/Contents/Resources/CHANGELOG.md"
 for lproj in Resources/*.lproj(N); do
     cp -R "$lproj" "$STAGE/Contents/Resources/"
 done
-if (( DEV )); then
+if (( DEV || SYNTEX )); then
     # A distinct identity so the Developer build installs and runs next to the
     # official app, with its own permissions, preferences and login item.
+    # Syntex Utils takes the same path with its own name and bundle id.
     /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $APP_BUNDLE_ID" "$STAGE/Contents/Info.plist"
     /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" "$STAGE/Contents/Info.plist"
     /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $APP_NAME" "$STAGE/Contents/Info.plist"
@@ -828,11 +917,18 @@ if (( DEV )); then
     /usr/libexec/PlistBuddy -c "Add :MachServices:$FAN_HELPER_ID bool true" "$FAN_PLIST"
     # Stamp the source commit + build time so the running dev app shows (in About)
     # exactly which code it was compiled from. Lets you verify it matches HEAD before
-    # testing, instead of unknowingly running a stale build. Dev-only; never shipped.
+    # testing, instead of unknowingly running a stale build. Dev and Syntex only;
+    # never shipped.
     SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
     [[ -n "$(git status --porcelain 2>/dev/null)" ]] && SHA="$SHA-dirty"
     /usr/libexec/PlistBuddy -c "Add :VorssaintBuildCommit string '$SHA · $(date '+%Y-%m-%d %H:%M')'" "$STAGE/Contents/Info.plist"
     echo "  stamped dev build: $SHA"
+fi
+if (( SYNTEX )); then
+    # Usage descriptions and the other visible plist texts name the app too.
+    perl Tools/syntex-branding.pl --in-place "$STAGE/Contents/Info.plist" \
+        "$STAGE"/Contents/Resources/*.lproj/InfoPlist.strings(N)
+    /usr/libexec/PlistBuddy -c "Delete :CFBundleIconName" "$STAGE/Contents/Info.plist"
 fi
 FAN_HELPER_VERSION="$(
     export LC_ALL=C
@@ -1062,8 +1158,9 @@ if (( INSTALL )); then
     echo "▸ Installing into /Applications…"
     stop_process "$EXECUTABLE"
     # Only an official install replaces the pre-rename official apps. The
-    # Developer variant must coexist with them just as it does with Vorssaint.
-    if (( ! DEV )); then
+    # Developer variant must coexist with them just as it does with Vorssaint,
+    # and so must Syntex Utils: the old apps leave by hand, after checking.
+    if (( ! DEV && ! SYNTEX )); then
         for legacy in "Vorss:Vorss" "Vorssaint Utils:VorssaintUtils"; do
             name="${legacy%%:*}"; proc="${legacy##*:}"
             if [[ -d "/Applications/$name.app" ]]; then

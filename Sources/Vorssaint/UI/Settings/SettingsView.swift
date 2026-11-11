@@ -741,7 +741,11 @@ struct AboutSettings: View {
                 aboutContent
             }
 
-            UpdatesView()
+            // The fork never updates itself (SyntexFork): no check button,
+            // no channel switch to promise what will not happen.
+            if !SyntexFork.isRunning {
+                UpdatesView()
+            }
         }
         .formStyle(.grouped)
     }
@@ -766,7 +770,7 @@ struct AboutSettings: View {
                             .clipShape(Capsule())
                     }
                 }
-                if AppInfo.isDeveloperBuild, let commit = AppInfo.buildCommit {
+                if AppInfo.isDeveloperBuild || SyntexFork.isRunning, let commit = AppInfo.buildCommit {
                     // Dev-only: which source commit this build came from. Never shipped.
                     Text(commit)
                         .font(.caption2.monospaced())
@@ -778,6 +782,12 @@ struct AboutSettings: View {
                 .font(.system(size: 12))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
+            if SyntexFork.isRunning {
+                Text(SyntexFork.attribution(l10n.language))
+                    .font(.system(size: 11))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+            }
             HStack(spacing: 12) {
                 Button(l10n.s.reviewIntro) {
                     appDelegate()?.showOnboarding()

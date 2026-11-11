@@ -21,13 +21,30 @@ signed=()
 stop_process() { stopped+=("$1"); }
 sign_installed_bundle() { signed+=("$1"); }
 
-for DEV in 1 0; do
+# Syntex Utils (--syntex) installs beside every Vorssaint, like the Developer
+# variant: the old apps leave by hand only after the fork has been checked.
+SYNTEX=0
+for DEV in 1 0 syntex; do
     stopped=()
     signed=()
-    for name in Vorss 'Vorssaint Utils' Vorssaint 'Vorssaint (Developer)'; do
+    for name in Vorss 'Vorssaint Utils' Vorssaint 'Vorssaint (Developer)' 'Syntex Utils'; do
         mkdir -p "$install_test_dir/Applications/$name.app"
         print original > "$install_test_dir/Applications/$name.app/content"
     done
+    if [[ $DEV == syntex ]]; then
+        DEV=0
+        SYNTEX=1
+        APP_NAME='Syntex Utils'
+        EXECUTABLE=SyntexUtils
+        source "$install_test_dir/install.zsh"
+        [[ "$(cat "$install_test_dir/Applications/Syntex Utils.app/content")" == new ]]
+        [[ "${signed[*]}" == "$install_test_dir/Applications/Syntex Utils.app" ]]
+        [[ "${stopped[*]}" == SyntexUtils ]]
+        for name in Vorss 'Vorssaint Utils' Vorssaint 'Vorssaint (Developer)'; do
+            [[ "$(cat "$install_test_dir/Applications/$name.app/content")" == original ]]
+        done
+        continue
+    fi
     if (( DEV )); then
         APP_NAME='Vorssaint (Developer)'
         EXECUTABLE=VorssaintDeveloper

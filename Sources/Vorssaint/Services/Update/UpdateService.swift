@@ -61,6 +61,10 @@ final class UpdateService: ObservableObject {
 
     /// Called at launch: checks shortly after start and then daily, if enabled.
     func startAutomaticChecks() {
+        // Syntex Utils has no update feed of its own, and the official one
+        // would replace the fork with the official app. It updates by being
+        // rebuilt from its repository.
+        if SyntexFork.isRunning { return }
         consumeInstallResult()
         if AppInfo.isBeta && UserDefaults.standard.object(forKey: DefaultsKey.includeBetaUpdates) == nil {
             UserDefaults.standard.set(true, forKey: DefaultsKey.includeBetaUpdates)
@@ -100,6 +104,12 @@ final class UpdateService: ObservableObject {
     // MARK: - Check
 
     func check(manual: Bool) {
+        if SyntexFork.isRunning {
+            state = .upToDate
+            availableNotes = nil
+            lastChecked = Date()
+            return
+        }
         if AppInfo.isDeveloperBuild {
             // No real update target; reflect the simulation default so the
             // notification UI can be exercised locally.
@@ -193,7 +203,7 @@ final class UpdateService: ObservableObject {
     /// or the panel opens, so a new release surfaces promptly without hammering the
     /// API. The hourly timer is the floor; this makes it feel immediate.
     func checkIfStale(maxAge: TimeInterval = 15 * 60) {
-        if AppInfo.isDeveloperBuild { return }
+        if AppInfo.isDeveloperBuild || SyntexFork.isRunning { return }
         guard autoCheckEnabled else { return }
         switch state {
         case .checking, .downloading, .installing: return
@@ -207,6 +217,7 @@ final class UpdateService: ObservableObject {
 
     func downloadAndInstall() {
         if AppInfo.isDeveloperBuild { return }  // never replace the local dev build over itself
+        if SyntexFork.isRunning { return }  // nor the fork with the official release
         guard let downloadURL else { return }
         // Pre-flight BEFORE spending the download: a translocated app or one
         // running from a read-only volume (the mounted DMG) can never be

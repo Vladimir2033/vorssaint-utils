@@ -77,6 +77,8 @@ final class FeedbackService {
     func submit(kind: FeedbackKind,
                 message: String,
                 diagnostics: FeedbackDiagnostics?) async throws {
+        // Feedback reaches the official maintainers; a fork's problems are not theirs.
+        guard SyntexFork.allowsOfficialServers else { throw FeedbackError.unavailable }
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.utf16.count >= 10, trimmed.utf16.count <= 2_000 else {
             throw FeedbackError.rejected

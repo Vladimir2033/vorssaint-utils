@@ -31,7 +31,9 @@ struct GeneralSettings: View {
                 if AppFeature.keepAwake.isAvailable {
                     shortcutCard
                 }
-                feedbackCard
+                if SyntexFork.allowsOfficialServers {
+                    feedbackCard
+                }
             }
             .frame(maxWidth: 760)
             .frame(maxWidth: .infinity)

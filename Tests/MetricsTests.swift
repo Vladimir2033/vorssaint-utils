@@ -31,6 +31,9 @@ struct MetricsTests {
                 DesktopWorldClockTests.run(suite)
                 DesktopWeatherTests.run(suite)
             }),
+            ("syntex", {
+                SyntexForkTests.run(suite)
+            }),
             ("clipboard", {
                 ClipboardFeatureTests.run(suite)
                 PastePlainTests.run(suite)

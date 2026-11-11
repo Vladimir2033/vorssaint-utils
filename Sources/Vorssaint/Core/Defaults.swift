@@ -2100,6 +2100,8 @@ enum Defaults {
         migrateNotchWatchAvailability(in: defaults)
         defaults.register(defaults: registeredDefaults)
         defaults.register(defaults: AppFeature.availabilityDefaults)
+        SyntexFork.applyLaunchPolicy(to: defaults,
+                                     isFork: SyntexFork.isFork(bundleIdentifier: Bundle.main.bundleIdentifier))
         activateBetaChannelIfRunningBeta(in: defaults)
         installCompanionForBetaCommandBar(in: defaults)
         migrateLegacyMenuBarTemperatureMetric(in: defaults)
