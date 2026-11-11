@@ -12,6 +12,8 @@
   Install only what you use.
 </p>
 
+> **Syntex Utils** (built here with `./build.sh --syntex`) is an unofficial, personal fork of Vorssaint, under GPL-3.0. It is not affiliated with or endorsed by the Vorssaint project; all credit for the original app goes to its authors.
+
 <p align="center">
   <a href="https://vorssaint.com">Website</a> ·
   <a href="#install">Install</a> ·
