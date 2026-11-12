@@ -492,7 +492,12 @@ enum FeatureVisibilitySupport {
     }
 
     static func isPageVisible(_ page: SettingsPage,
-                              isAvailable: (AppFeature) -> Bool) -> Bool {
+                              isAvailable: (AppFeature) -> Bool,
+                              showsInvitations: Bool = SyntexFork.showsUpstreamInvitations) -> Bool {
+        // The Support page is the official project's donation and star
+        // invitation; Syntex Utils drops it (SyntexFork). Sidebar, search
+        // and the redirect off a hidden page all ask here.
+        if page == .support && !showsInvitations { return false }
         let gate = features(for: page)
         return gate.isEmpty || gate.contains(where: isAvailable)
     }

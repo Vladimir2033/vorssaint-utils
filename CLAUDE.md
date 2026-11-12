@@ -59,6 +59,7 @@ git pull                                  # traz o que foi feito em outra máqui
 | Textos visíveis | "Vorssaint" vira "Syntex Utils" **na hora do build** | `Tools/syntex-branding.pl` |
 | Atualização | desligada: nunca consulta nem instala o feed oficial | `SyntexFork`, `UpdateService` |
 | Feedback e links temporários | desligados (iam para os servidores do original) | `SyntexFork` e serviços |
+| Convites do original | escondidos: página Apoiar, convite pós-atualização, passo de apoio da apresentação (doação, estrela, Discord) | `SyntexFork.showsUpstreamInvitations` |
 | Módulos | todos instalados por padrão, menos controle de ventoinha | `SyntexFork.availabilityDefaults` |
 | Sobre | mostra "Fork não oficial do Vorssaint, sob GPL-3.0" e o commit do build | `SettingsView` |
 

@@ -129,16 +129,27 @@ struct UpdateShowcaseIntroView: View {
             Divider()
 
             HStack {
-                Button(l10n.s.supportIntroLaterButton) {
-                    onClose()
+                // Syntex Utils has no support step (SyntexFork): the showcase
+                // ends here with a single Done.
+                if SyntexFork.showsUpstreamInvitations {
+                    Button(l10n.s.supportIntroLaterButton) {
+                        onClose()
+                    }
+                    .keyboardShortcut(.cancelAction)
+                    Spacer()
+                    Button(l10n.s.obContinue) {
+                        step = .support
+                    }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+                } else {
+                    Spacer()
+                    Button(l10n.s.supportIntroDoneButton) {
+                        onClose()
+                    }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
                 }
-                .keyboardShortcut(.cancelAction)
-                Spacer()
-                Button(l10n.s.obContinue) {
-                    step = .support
-                }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
             }
             .padding(16)
         }

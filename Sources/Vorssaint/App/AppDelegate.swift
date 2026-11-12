@@ -2544,6 +2544,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     }
 
     private func showSupportUpdateIntroIfNeeded() -> Bool {
+        guard SyntexFork.showsUpstreamInvitations else { return false }
         // Stable patches share one invitation, even if the first installed
         // version in this release series is a hotfix.
         guard SupportUpdateIntroInfo.shouldShow(
@@ -2555,6 +2556,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     }
 
     private func showSupportUpdateIntro(isReview: Bool = false) {
+        guard SyntexFork.showsUpstreamInvitations else { return }
         guard !isTerminating, isReview || !AppInfo.isBeta else { return }
         closePopover()
         if let window = supportIntroWindow {

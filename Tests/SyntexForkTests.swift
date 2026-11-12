@@ -13,7 +13,30 @@ enum SyntexForkTests {
         identity(suite)
         availability(suite)
         serverSwitches(suite)
+        invitations(suite)
         wiring(suite)
+    }
+
+    /// The official project's invitations (donate, star the repository,
+    /// Discord) would ask for support on its behalf from inside the fork.
+    private static func invitations(_ suite: TestSuite) {
+        suite.expect(!SyntexFork.showsUpstreamInvitations(bundleIdentifier: SyntexFork.bundleIdentifier),
+                     "the fork shows none of the official project's invitations")
+        suite.expect(SyntexFork.showsUpstreamInvitations(bundleIdentifier: "com.vorssaint.utils")
+                        && SyntexFork.showsUpstreamInvitations(bundleIdentifier: "com.vorssaint.utils.dev")
+                        && SyntexFork.showsUpstreamInvitations(bundleIdentifier: nil),
+                     "the official and Developer builds keep them")
+        let everything: (AppFeature) -> Bool = { _ in true }
+        suite.expect(!FeatureVisibilitySupport.isPageVisible(.support, isAvailable: everything,
+                                                             showsInvitations: false),
+                     "the Support page leaves Settings, its search and its sidebar in the fork")
+        suite.expect(FeatureVisibilitySupport.isPageVisible(.support, isAvailable: everything,
+                                                            showsInvitations: true),
+                     "the Support page stays in the official app")
+        suite.expect([SettingsPage.about, .general, .releaseNotes].allSatisfy {
+                        FeatureVisibilitySupport.isPageVisible($0, isAvailable: everything, showsInvitations: false)
+                     },
+                     "hiding Support hides no other page")
     }
 
     private static func identity(_ suite: TestSuite) {
@@ -106,6 +129,18 @@ enum SyntexForkTests {
             suite.expect(body(source(path), after: marker, lines: 5).contains("guard SyntexFork.allowsOfficialServers,"),
                          "\((path as NSString).lastPathComponent) uploads nothing from the fork")
         }
+
+        let delegate = source("Sources/Vorssaint/App/AppDelegate.swift")
+        suite.expect(body(delegate, after: "    private func showSupportUpdateIntroIfNeeded() -> Bool {", lines: 2)
+                        .contains("guard SyntexFork.showsUpstreamInvitations else { return false }"),
+                     "the fork never queues the after-update invitation, so the next intro runs")
+        suite.expect(body(delegate, after: "    private func showSupportUpdateIntro(isReview: Bool = false) {", lines: 2)
+                        .contains("guard SyntexFork.showsUpstreamInvitations else { return }"),
+                     "reviewing the tour in the fork does not end on the invitation")
+        let showcase = source("Sources/Vorssaint/UI/Onboarding/WhatsNewView.swift")
+        suite.expect(body(showcase, after: "    private var showcaseStep: some View {", lines: 80)
+                        .contains("if SyntexFork.showsUpstreamInvitations {"),
+                     "the feature showcase in the fork closes instead of turning to the support step")
 
         let registration = source("Sources/Vorssaint/Core/Defaults.swift")
         let upstream = registration.range(of: "defaults.register(defaults: AppFeature.availabilityDefaults)")

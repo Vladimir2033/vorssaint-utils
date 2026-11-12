@@ -73,6 +73,19 @@ enum SyntexFork {
         allowsOfficialServers(bundleIdentifier: Bundle.main.bundleIdentifier)
     }
 
+    /// Whether the official project's invitations may show: Buy Me a Coffee,
+    /// a star on its GitHub repository, its Discord. With the app's name
+    /// rewritten they read as a plea for Syntex Utils while every link
+    /// leads to Vorssaint, and the fork's owner asked for them gone. The
+    /// About page's link to the original repository stays: that is credit.
+    static func showsUpstreamInvitations(bundleIdentifier: String?) -> Bool {
+        !isFork(bundleIdentifier: bundleIdentifier)
+    }
+
+    static var showsUpstreamInvitations: Bool {
+        showsUpstreamInvitations(bundleIdentifier: Bundle.main.bundleIdentifier)
+    }
+
     /// Credit shown in About. It names the original project on purpose:
     /// build.sh rewrites the app name in visible texts, and this file is
     /// left out of that rewrite.
